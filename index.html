@@ -120,7 +120,6 @@ svg.zoomed .op, .op.hot { opacity: 1; }
 .node text.name { font-family: var(--f-display); font-size: 15.5px; fill: var(--ink); }
 .node.branch text.name, .node.mod text.name { font-size: 14px; }
 .node text.scale { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink-soft); }
-.node text.ph { font-family: var(--f-mono); font-size: 9.5px; fill: var(--ink-soft); letter-spacing: .05em; }
 .node:hover text.name, .node.sel text.name { fill: var(--accent); }
 .here-tag { font-family: var(--f-mono); font-size: 10.5px; fill: var(--accent); letter-spacing: .08em; opacity: 0; }
 .node.here .here-tag { opacity: 1; }
@@ -175,7 +174,6 @@ figure.fig .to { font-family: var(--f-mono); color: var(--ink-soft); }
 .ex li { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; border-bottom: 1px dotted var(--rule); padding-bottom: 5px; font-size: 15px; }
 .ex a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .ex .st { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; }
-.ex .ph { color: var(--ink-soft); font-style: italic; }
 .g { font-size: 13px; }
 .g-est { color: var(--ink); } .g-lik { color: var(--accent); } .g-unv { color: var(--ochre); }
 .orig { font-size: 14px; display: flex; gap: 8px; }
@@ -272,132 +270,105 @@ aside.panel > * { min-width: 0; }
 <script>
 (function () {
   /* ---------- data ---------- */
-  const B = 'https://mrio.github.io/NeuroAI_explainers/';
-  const ex = (t, p) => ({ t, u: B + encodeURI(p) });
-  const planned = t => ({ t, planned: true });
-  const coming = t => ({ t, coming: true });
 
   const N = [
     { id: 'ion-channels', kind: 'spine', name: 'Ion Channels and Synapses', scale: '≈ 10 nm · μs to ms',
       b: ['Membrane proteins open and close stochastically, gating currents of specific ions.',
           'Synapses convert a presynaptic spike into a brief conductance change in the postsynaptic membrane.',
-          'The most detailed level on this map; every level after it averages over many such events.'],
-      ex: [planned('Single channel gating and channel noise')] },
+          'The most detailed level on this map; every level after it averages over many such events.'] },
     { id: 'compartmental', kind: 'spine', name: 'Compartmental Neuron', scale: '≈ 0.1 to 1 mm · ms',
       b: ['The cell is divided into electrically coupled compartments that follow its dendritic and axonal shape.',
           'Each compartment carries its own membrane currents, so the position of a synapse changes its effect.',
-          'Cable theory describes how voltage spreads and attenuates along the branches.'],
-      ex: [planned('Dendritic integration on a branching cable')] },
+          'Cable theory describes how voltage spreads and attenuates along the branches.'] },
     { id: 'conductance-point', kind: 'spine', name: 'Conductance-Based Point Neuron', scale: 'one cell · 0.1 ms',
       b: ['The whole cell becomes one isopotential compartment with voltage-dependent conductances.',
           'Spikes arise from the interplay of fast sodium activation with slower sodium inactivation and potassium activation.',
           'Four or more coupled differential equations describe a single cell.'],
-      foot: 'Hodgkin and Huxley (1952) established this formalism on the squid giant axon, work recognised with the Nobel Prize in 1963.',
-      ex: [planned('Conductance-based spike generation')] },
+      foot: 'Hodgkin and Huxley (1952) established this formalism on the squid giant axon, work recognised with the Nobel Prize in 1963.' },
     { id: 'reduced', kind: 'spine', name: 'Reduced Neuron Models', scale: 'one cell · ms',
       b: ['A fast voltage and a slow recovery variable stand in for the full set of gating variables.',
           'The dynamics can be drawn entirely in a phase plane, with nullclines, fixed points and limit cycles.',
           'Different classes of excitability appear as different geometries of that plane.'],
-      foot: 'FitzHugh–Nagumo, Morris–Lecar, Izhikevich and the adaptive exponential (AdEx) model belong here.',
-      ex: [ex('Adaptive Exponential Spiking Neuron Phase Space', 'Spiking Neuron (AdEx)/adex_phase_space_v5.html')] },
+      foot: 'FitzHugh–Nagumo, Morris–Lecar, Izhikevich and the adaptive exponential (AdEx) model belong here.' },
     { id: 'integrate-and-fire', kind: 'spine', name: 'Integrate-and-Fire Neuron', scale: 'one cell · ms',
       b: ['The membrane integrates input current as a leaky capacitor until it reaches a threshold.',
           'At threshold a spike is registered and the voltage is reset; the shape of the spike is never computed.',
-          'Cheap enough to simulate in networks of many thousands of cells.'],
-      ex: [ex('Shishi-odoshi Leaky Integrate-and-Fire Neuron', 'LIF neuron shishi-odoshi/index.html')] },
+          'Cheap enough to simulate in networks of many thousands of cells.'] },
     { id: 'spiking-network', kind: 'spine', name: 'Spiking Network', scale: '10³ to 10⁵ cells · ms',
       b: ['Integrate-and-fire or reduced neurons coupled by synapses, usually split into excitatory and inhibitory populations.',
           'Collective states emerge that no single cell displays: asynchronous irregular firing, synchrony and oscillations.',
-          'Results depend on the statistics of the wiring as much as on the neuron model.'],
-      ex: [ex('E-I Balanced LIF Network', 'E-I Networks/index.html'), ex('E-I Balanced Network, standalone', 'E-I Networks/E-I_balanced_network.html')] },
+          'Results depend on the statistics of the wiring as much as on the neuron model.'] },
     { id: 'rate-population', kind: 'spine', name: 'Rate Population Model', scale: 'one population · ≈ 10 ms',
       b: ['Each population is described by a single firing rate that evolves in time.',
           'A sigmoid or similar gain function links input to rate.',
           'Small systems of equations whose fixed points and oscillations can be analysed by hand.'],
-      foot: 'Wilson and Cowan (1972).',
-      ex: [ex('Two Neuron Recurrent Dynamics', 'Two Neuron Recurrent Dynamics/two_neuron_dynamics_simulator.html')] },
+      foot: 'Wilson and Cowan (1972).' },
     { id: 'laminar-column', kind: 'spine', name: 'Laminar Column Model', scale: '≈ 0.5 mm across, 2 mm deep',
       b: ['Rate populations are assigned to cortical layers and cell classes, with directed pathways between them.',
           'Feedforward input, processing within the column and feedback targets become separable.',
-          'Allows one to ask which layer projects where, within the column and towards other areas.'],
-      ex: [ex('Multilayer Tanh/Sigmoid Stack', 'Multi Layer Meanfield Network/meanfield_layers_demo/index.html'), ex('Multilayer Tanh Stack V6', 'Multi Layer Meanfield Network/multi_layer_tanh_v6.html')] },
+          'Allows one to ask which layer projects where, within the column and towards other areas.'] },
     { id: 'neural-mass', kind: 'spine', name: 'Neural Mass Model', scale: 'one column · 10 to 100 ms',
       b: ['A whole column is lumped into a few interacting populations, typically pyramidal cells with excitatory and inhibitory interneurons.',
           'Synaptic kernels and a sigmoid produce rhythms resembling those recorded in the EEG.',
           'The standard building block of whole-brain simulations.'],
-      foot: 'Lopes da Silva et al. (1974); Jansen and Rit (1995).',
-      ex: [planned('Jansen–Rit column and its rhythms')] },
+      foot: 'Lopes da Silva et al. (1974); Jansen and Rit (1995).' },
     { id: 'neural-field', kind: 'spine', name: 'Neural Field', scale: 'cm of cortex · 10 to 100 ms',
       b: ['Cortex is treated as a continuous sheet, with activity defined at every point.',
           'Connectivity becomes a kernel that depends on distance, and the model becomes an integro-differential equation in space and time.',
-          'Supports travelling waves, stationary bumps and spatial patterns.'],
-      ex: [ex('Neural-Grid Experiments', 'Multi Layer Meanfield Network/tanh_grid_v5.html')] },
+          'Supports travelling waves, stationary bumps and spatial patterns.'] },
     { id: 'large-scale', kind: 'spine', name: 'Large-Scale Network Model', scale: 'whole brain · 0.1 to 10 s',
       b: ['Each brain area becomes one node, usually a neural mass, coupled through a measured connectome.',
           'Distances between areas introduce conduction delays.',
-          'Used to relate anatomical structure to functional connectivity and to whole-brain signals.'],
-      ex: [planned('Whole-brain model on a connectome')] },
+          'Used to relate anatomical structure to functional connectivity and to whole-brain signals.'] },
 
     { id: 'artificial-network', kind: 'branch', name: ['Artificial', 'Neural Network'], H: [830, 400], V: [262, 725],
       b: ['Units compute a weighted sum of their inputs passed through a threshold or another nonlinearity, without explicit time or spikes.',
           'Weights are set by hand or learned from data, usually by gradient descent.',
           'A tool for asking what a representation could compute, at scales no biophysical model reaches.'],
-      foot: 'The McCulloch–Pitts threshold unit (1943) is the simplest member of this family.',
-      ex: [ex('DIY Receptive Field', 'Receptive Field explainer/receptive_field_explainer.html'), ex('LGN ON/OFF Center-Surround Cells', 'LGN_on_off_cells/lgn_on_off_center_surround.html'), ex('Reichardt–Hassenstein Motion Detector', 'motion_detector/reichardt-hassenstein-explainer.html'), ex('Feedforward Neural Networks', 'FFNN explainer/FFNN_explainer.html'), ex('Echo State Decoder: Figure-Eight Arm', 'Echo State Decoder/index.html'), ex('Through the Keyhole: Autoencoders', 'Autoencoder/autoencoder_explainer.html'), coming('The Matching Law and the Perceptron')] },
+      foot: 'The McCulloch–Pitts threshold unit (1943) is the simplest member of this family.' },
     { id: 'attractor-network', kind: 'branch', name: ['Attractor', 'Network'], H: [640, 400], V: [262, 625],
       b: ['Binary or rate units with recurrent, often symmetric, weights.',
           'Stored patterns become stable states, so a partial cue settles into the full memory.',
           'An energy function makes capacity and retrieval analysable.'],
-      foot: 'Hopfield (1982).',
-      ex: [planned('Hopfield network and pattern completion')] },
+      foot: 'Hopfield (1982).' },
     { id: 'phase-oscillator', kind: 'branch', name: ['Phase Oscillator', 'Model'], H: [1040, 400], V: [262, 925],
       b: ['Each oscillating population is reduced to a single phase on a circle.',
           'Coupling functions decide whether oscillators synchronise, lock or drift.',
           'Central to questions about synchrony and coherence between areas.'],
-      foot: 'Winfree (1967); Kuramoto (1975).',
-      ex: [planned('Kuramoto synchronisation')] },
+      foot: 'Winfree (1967); Kuramoto (1975).' },
     { id: 'connectivity-graph', kind: 'branch', name: ['Connectivity', 'Graph'], H: [1230, 400], V: [262, 1125],
       b: ['Neurons or areas become vertices; synapses or tracts become edges.',
           'Degree, motifs, modules and path lengths describe structure without any dynamics.',
-          'Constrains every model on the map that needs wiring.'],
-      ex: [ex('Network Propagation', 'Network Propagation Demo/propagation_examples.html')] },
+          'Constrains every model on the map that needs wiring.'] },
     { id: 'forward-model', kind: 'branch', name: ['Forward Model', 'of Measurement'], H: [1405, 400], V: [262, 1195],
       b: ['Maps simulated activity onto what an instrument records: LFP, EEG, MEG or fMRI.',
           'Each modality is blind to some activity, for example currents whose fields cancel at the sensor.',
-          'The bridge required to test any model on this map against data.'],
-      ex: [planned('From population activity to EEG and BOLD')] },
+          'The bridge required to test any model on this map against data.'] },
 
     { id: 'dynamical-systems', kind: 'lens', name: 'Dynamical Systems Analysis',
       b: ['A way of reading every model on the map: state space, fixed points, stability, bifurcations, limit cycles and chaos.',
           'The same questions apply to the gating of a channel, a single neuron and a whole-brain model.',
-          'Often decides whether a simplification is acceptable, since a good reduction preserves the structure of bifurcations.'],
-      ex: [ex('Vector Field Studio', 'Vector Field Studio/vector-field-studio.html'), ex('RNN Eigenspace Explorer', 'RNN eigen explorer/rnn_eigen_explorer.html'), ex('Small RNN Eigenspace Explorer', 'small RNN eigenspace explorer/index.html'), coming('Return Maps of Random Recurrent Networks')] },
+          'Often decides whether a simplification is acceptable, since a good reduction preserves the structure of bifurcations.'] },
 
     { id: 'long-term-plasticity', kind: 'mod', name: ['Long-Term', 'Plasticity'], H: [110, 635], V: [46, 1320], targets: ['spiking-network', 'rate-population', 'artificial-network', 'attractor-network'],
       b: ['Weights change slowly with correlated activity, as in Hebbian learning, spike-timing-dependent plasticity and reward-modulated rules.',
-          'Alters the edges of a network while the dynamics of its nodes stay fixed.'],
-      ex: [ex("Stabilizing Hebbian Learning: Oja's Rule", 'Stabilizing Hebbian Learning/oja_rule.html')] },
+          'Alters the edges of a network while the dynamics of its nodes stay fixed.'] },
     { id: 'short-term-plasticity', kind: 'mod', name: ['Short-Term', 'Plasticity'], H: [368, 635], V: [240, 1320], targets: ['ion-channels', 'spiking-network', 'neural-mass'],
       b: ['Synaptic efficacy facilitates or depresses over tens to hundreds of milliseconds.',
           'Turns fixed weights into dynamical variables with time constants of their own.'],
-      foot: 'Tsodyks and Markram (1997).',
-      ex: [planned('Facilitating and depressing synapses')] },
+      foot: 'Tsodyks and Markram (1997).' },
     { id: 'neuromodulation', kind: 'mod', name: ['Neuro-', 'modulation'], H: [626, 635], V: [46, 1380], targets: ['conductance-point', 'rate-population', 'neural-mass'],
       b: ['Acetylcholine, dopamine, noradrenaline and serotonin alter gains, thresholds and synaptic strengths, often by diffusing from release sites rather than acting at a single synapse.',
-          'The same circuit can thereby run in several distinct operating regimes.'],
-      ex: [planned('Gain modulation of a population')] },
+          'The same circuit can thereby run in several distinct operating regimes.'] },
     { id: 'oscillatory-gating', kind: 'mod', name: ['Oscillatory', 'Gating'], H: [884, 635], V: [240, 1380], targets: ['spiking-network', 'neural-mass', 'phase-oscillator'],
       b: ['Rhythms open and close windows of time in which input is effective.',
-          'Rate and mass models capture the rhythm itself; whether a spike lands at the right phase of the cycle is resolved only at the spiking level.'],
-      ex: [planned('Communication through coherence')] },
+          'Rate and mass models capture the rhythm itself; whether a spike lands at the right phase of the cycle is resolved only at the spiking level.'] },
     { id: 'homeostatic-regulation', kind: 'mod', name: ['Homeostatic', 'Regulation'], H: [1142, 635], V: [46, 1440], targets: ['integrate-and-fire', 'spiking-network', 'rate-population'],
       b: ['Slow processes keep firing rates within a target range by scaling synapses or adjusting excitability.',
-          'Stabilises learning rules that would otherwise run away.'],
-      ex: [planned('Synaptic scaling')] },
+          'Stabilises learning rules that would otherwise run away.'] },
     { id: 'noise-variability', kind: 'mod', name: ['Noise and', 'Variability'], H: [1400, 635], V: [240, 1440], targets: ['ion-channels', 'spiking-network', 'rate-population', 'neural-field'],
       b: ['Channel noise, synaptic failures and irregular input make activity variable from trial to trial.',
-          'Depending on the circumstances it degrades a signal, helps detect a weak one, or drives transitions between states.'],
-      ex: [planned('Stochastic resonance')] }
+          'Depending on the circumstances it degrades a signal, helps detect a weak one, or drives transitions between states.'] }
   ];
 
   const E = [
@@ -742,27 +713,24 @@ aside.panel > * { min-width: 0; }
       mk('circle', { class: 'ring', cx: x, cy: y, r: r + 6 }, g);
       mk('circle', { class: 'dot', cx: x, cy: y, r }, g);
       mk('circle', { class: 'hit', cx: x, cy: y, r: 16 }, g);
-      const hasEx = true;
       if (n.kind === 'spine') {
         if (mode === 'H') {
           const lg = mk('g', { transform: `translate(${x + 10},${y - 12}) rotate(-36)` }, g);
           mk('text', { class: 'name', x: 0, y: 0 }, lg).textContent = n.name;
-          mk('text', { class: 'scale', x: 2, y: 14 }, lg).textContent = n.scale + (hasEx ? '' : '  · planned');
+          mk('text', { class: 'scale', x: 2, y: 14 }, lg).textContent = n.scale;
           mk('rect', { class: 'hit', x: -4, y: -16, width: 250, height: 34 }, lg);
           mk('text', { class: 'here-tag', x, y: y + 66, 'text-anchor': 'middle' }, g).textContent = 'YOU ARE HERE';
         } else {
           mk('text', { class: 'name', x: x + 16, y: y + 4 }, g).textContent = n.name;
-          mk('text', { class: 'scale', x: x + 16, y: y + 19 }, g).textContent = n.scale + (hasEx ? '' : '  · planned');
+          mk('text', { class: 'scale', x: x + 16, y: y + 19 }, g).textContent = n.scale;
           mk('rect', { class: 'hit', x: x - 14, y: y - 14, width: 320, height: 38 }, g);
           mk('text', { class: 'here-tag', x: x + 16, y: y - 13 }, g).textContent = 'YOU ARE HERE';
         }
       } else {
-        const lines = n.name.slice();
-        if (n.kind === 'branch' && !hasEx) lines.push(null);
+        const lines = n.name;
         lines.forEach((line, i) => {
-          const isPh = line === null;
           const attrs = mode === 'H' ? { x, y: y + 24 + i * 16, 'text-anchor': 'middle' } : { x: x + 13, y: y + 5 + i * 15 };
-          mk('text', { class: isPh ? 'ph' : 'name', ...attrs }, g).textContent = isPh ? 'explainer planned' : line;
+          mk('text', { class: 'name', ...attrs }, g).textContent = line;
         });
         if (mode === 'H') mk('rect', { class: 'hit', x: x - 75, y: y - 14, width: 150, height: 34 + lines.length * 16 }, g);
         else mk('rect', { class: 'hit', x: x - 14, y: y - 14, width: 165, height: 24 + lines.length * 15 }, g);
@@ -850,11 +818,6 @@ aside.panel > * { min-width: 0; }
   }
   function closePanel() { panel.classList.add('closed'); }
   const topBar = (kick, title, sub) => `<div class="panel-top"><div><div class="kicker">${kick}</div><h2>${esc(title)}</h2>${sub ? `<div class="path-row">${sub}</div>` : ''}</div><button type="button" class="closer" data-clear aria-label="Close">×</button></div>`;
-  function exList(list) {
-    return '<ul class="ex">' + list.map(x => x.u
-      ? `<li><a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.t)}</a><span class="st">open ↗</span></li>`
-      : `<li><span class="ph">${esc(x.t)}</span><span class="st">${x.coming ? 'being wired' : 'planned'}</span></li>`).join('') + '</ul>';
-  }
   const moveBtn = (dir, attrs, label, sub) => `<button type="button" class="move" ${attrs}><span class="dir">${dir}</span><span class="what">${esc(label)}${sub ? ` <i>· ${esc(sub)}</i>` : ''}</span></button>`;
 
   function plateBlock(id) {
@@ -886,7 +849,6 @@ aside.panel > * { min-width: 0; }
       `<ul class="bul">${n.b.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` +
       (n.foot ? `<p class="foot">${esc(n.foot)}</p>` : '') +
       plateBlock(id) +
-      (n.ex.filter(x => !x.planned).length ? `<section><h3>Other explainers</h3>${exList(n.ex.filter(x => !x.planned))}</section>` : '') +
       (moves ? `<section><h3>Moves from here</h3><div class="moves">${moves}</div></section>` : '');
     wirePanel();
   }
