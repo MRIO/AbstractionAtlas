@@ -911,6 +911,7 @@ aside.panel > * { min-width: 0; }
         <li>A node shows what a model is; an edge shows what a simplification keeps, what it loses and when to trust it. Each opens onto a plate, a short page with one interactive model.</li>
         <li>Side branches leave the spine towards functional and structural descriptions. Modulators sit in their own row; their dashed links appear when you select one, or a node they act on.</li>
         <li>The bracket is a lens, applicable at every level.</li>
+        <li>With a node on the spine selected, the left and right arrow keys step to the previous and next level; Escape clears the selection.</li>
       </ul>
       <div class="glyph-key"><h3>Confidence in attributions</h3>
         <span><span class="g g-est">●</span> established in the literature</span>
@@ -984,6 +985,18 @@ aside.panel > * { min-width: 0; }
   svg.addEventListener('pointerup', endDrag); svg.addEventListener('pointercancel', endDrag);
   svg.addEventListener('click', () => { if (dragMoved) return; if (sel) clearSel(); });
   document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && sel) clearSel(); });
+  // Left and right step along the spine; on a spine edge they go to its ends.
+  document.addEventListener('keydown', ev => {
+    if (!sel || (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') || ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
+    if (ev.target.closest && ev.target.closest('input, textarea, select, [contenteditable]')) return;
+    const fwd = ev.key === 'ArrowRight';
+    let to = null;
+    if (sel.type === 'node') { const i = spine.indexOf(byId[sel.id]); if (i >= 0 && spine[i + (fwd ? 1 : -1)]) to = spine[i + (fwd ? 1 : -1)].id; }
+    else { const e = eById[sel.id]; if (e.kind === 'spine' || e.kind === 'compose') to = fwd ? e.to : e.from; }
+    if (!to) return;
+    ev.preventDefault(); selectNode(to);
+    if (nodeEls[to]) nodeEls[to].focus({ preventScroll: true });
+  });
   document.getElementById('howto').addEventListener('click', () => { if (sel) { sel = null; clearMarks(); } renderDefault(); panel.classList.remove('closed'); setLevel('overview'); });
 
   /* ---------- print ---------- */
