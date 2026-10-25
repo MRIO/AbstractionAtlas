@@ -815,6 +815,15 @@ aside.panel > * { min-width: 0; }
     const e = eById[sel.id], a = pos(byId[e.from]), b = pos(byId[e.to]);
     return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
   }
+  // bounding box of the selection and everything it connects to, padded for labels
+  function focusBox() {
+    if (!sel) return null;
+    if (sel.type === 'node' && sel.id === 'dynamical-systems') { const [x, y] = focusPoint(); return [x, y, x, y]; }
+    const ids = sel.type === 'node' ? [sel.id, ...incident(sel.id).flatMap(e => [e.from, e.to])] : [eById[sel.id].from, eById[sel.id].to];
+    const ps = ids.map(id => pos(byId[id]));
+    const xs = ps.map(p => p[0]), ys = ps.map(p => p[1]);
+    return [Math.min(...xs) - 70, Math.min(...ys) - 100, Math.max(...xs) + 90, Math.max(...ys) + 75];
+  }
   function selectNode(id, opts) {
     if (!(opts && opts.keepHere)) { if (hereId && nodeEls[hereId]) nodeEls[hereId].classList.remove('here'); hereId = null; }
     sel = { type: 'node', id };
@@ -841,7 +850,7 @@ aside.panel > * { min-width: 0; }
   const kindLabel = { spine: 'Main spine', branch: 'Side branch', mod: 'Modulator', lens: 'Transversal lens' };
   function openPanel() {
     panel.classList.remove('closed');
-    if (mode === 'H') { const f = focusPoint(); setLevel('detail', f); }
+    if (mode === 'H') setLevel('detail', focusBox());
     else panel.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   }
   function closePanel() { panel.classList.add('closed'); }
@@ -948,13 +957,17 @@ aside.panel > * { min-width: 0; }
     svg.classList.toggle('zoomed', l === 'detail');
     mapbox.classList.toggle('pannable', l === 'detail');
     if (l === 'overview') { animateTo(base); return; }
-    const w = base.w / 2, h = base.h / 2;
     const mw = mapbox.clientWidth || 1, dw = panel.classList.contains('closed') ? 0 : panel.offsetWidth;
     const visFrac = Math.max(.4, (mw - dw) / mw);
-    const f = focus || [vb.x + vb.w / 2, vb.y + vb.h / 2];
+    // focus is a point, or a box [x0, y0, x1, y1] to fit beside the panel (never closer than the 2× detail level)
+    const box = focus && focus.length === 4 ? focus : null;
+    let w = base.w / 2;
+    if (box) w = Math.min(base.w / visFrac, Math.max(w, (box[2] - box[0]) / visFrac, (box[3] - box[1]) * base.w / base.h));
+    const h = w * base.h / base.w;
+    const f = box ? [(box[0] + box[2]) / 2, (box[1] + box[3]) / 2] : focus || [vb.x + vb.w / 2, vb.y + vb.h / 2];
     let x = f[0] - w * visFrac / 2, y = f[1] - h / 2;
-    x = Math.max(-40, Math.min(base.w - w * visFrac + 40, x));
-    y = Math.max(-20, Math.min(base.h - h + 20, y));
+    if (w * visFrac < base.w) x = Math.max(-40, Math.min(base.w - w * visFrac + 40, x));
+    if (h < base.h) y = Math.max(-20, Math.min(base.h - h + 20, y));
     animateTo({ x, y, w, h });
   }
   zOver.addEventListener('click', () => setLevel('overview'));
