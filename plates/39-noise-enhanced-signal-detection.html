@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Noise-Enhanced Signal Detection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Spectral+SC:wght@500&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap">
+<style>:root {
+  --paper: #e4e6e3;
+  --ink: #191d24;
+  --ink-soft: #565d68;
+  --accent: #1d3b63;
+  --ochre: #94661c;
+  --rule: #191d2433;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .12 0 0 0 0 .16 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --f-display: "Spectral SC", "Cormorant SC", Georgia, serif;
+  --f-text: "Spectral", Georgia, "Times New Roman", serif;
+  --f-mono: "Courier Prime", "Courier New", ui-monospace, monospace;
+  color-scheme: light;
+}
+:root[data-print="cyan"] {
+  --paper: #c7dbec;
+  --ink: #0a2350;
+  --ink-soft: #2f4f7e;
+  --accent: #a2352a;
+  --ochre: #7f5512;
+  --rule: #0a235038;
+  --grain:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .04 0 0 0 0 .14 0 0 0 0 .34 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.00625' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .05 0 0 0 0 .2 0 0 0 0 .48 0 0 0 .8 -.33'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  background-color: var(--paper); background-image: var(--grain);
+  color: var(--ink);
+  font-family: var(--f-text); font-size: 16.5px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 48px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 22px; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.top { display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: space-between; align-items: center; font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; color: var(--ink-soft); border-bottom: 1px solid var(--ink); padding-bottom: 10px; }
+.top a { color: var(--ink); text-decoration: none; text-transform: uppercase; }
+.top a:hover { color: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--ink); }
+.seg button { font-family: var(--f-mono); font-size: 12px; background: transparent; color: var(--ink); border: 0; padding: 4px 11px; cursor: pointer; letter-spacing: .04em; }
+.seg button + button { border-left: 1px solid var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+.strip { display: block; max-width: 460px; }
+.strip svg { width: 100%; height: auto; display: block; overflow: visible; }
+.strip .sd { fill: var(--ink); }
+.strip .bd { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
+.strip .md { fill: var(--paper); stroke: var(--ochre); stroke-width: 1; stroke-dasharray: 1.5 1.5; }
+.strip .sl { stroke: var(--ink); stroke-width: 1.2; }
+.strip .bl { stroke: var(--ink); stroke-width: .7; fill: none; opacity: .6; }
+.strip .hl { stroke: var(--accent); stroke-width: 3.2; fill: none; }
+.strip .hr { fill: none; stroke: var(--accent); stroke-width: 1.4; }
+.strip text { font-family: var(--f-mono); font-size: 7.5px; fill: var(--ink-soft); letter-spacing: .05em; }
+
+.head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 300px); gap: 18px 36px; align-items: end; }
+.kicker { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+h1 { font-family: var(--f-display); font-weight: 500; font-size: clamp(30px, 4.4vw, 48px); line-height: 1.04; letter-spacing: .01em; margin: 6px 0 4px; text-wrap: balance; }
+.sub { font-family: var(--f-mono); font-size: 12.5px; color: var(--ink-soft); }
+.glyphbox { margin: 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 6px 0; display: flex; align-items: center; gap: 6px; }
+.glyphbox .to { font-family: var(--f-mono); color: var(--ink-soft); }
+.glyphbox.pair .glyph { max-width: 46%; }
+
+.prose { max-width: 70ch; display: grid; gap: 10px; }
+.prose p { margin: 0; }
+.prose a.term { color: inherit; text-decoration: underline dotted var(--accent); text-underline-offset: 3px; }
+
+.widget { border: 1px solid var(--ink); padding: 5px; position: relative; }
+.widget::before { content: ""; position: absolute; inset: 3px; border: 1px solid var(--rule); pointer-events: none; }
+.widget-in { padding: 14px 16px 16px; display: grid; gap: 14px; }
+.panels { display: grid; gap: 16px 22px; align-items: start; }
+.panel { min-width: 0; display: grid; gap: 4px; }
+.panel h2 { margin: 0; font-family: var(--f-mono); font-weight: 400; font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.panel .cv { position: relative; width: 100%; }
+.panel canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.readout { font-family: var(--f-mono); font-size: 12px; color: var(--ink-soft); min-height: 1.4em; font-variant-numeric: tabular-nums; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: end; border-top: 1px solid var(--rule); padding-top: 12px; }
+.ctl { display: grid; gap: 3px; font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-soft); letter-spacing: .04em; min-width: 180px; }
+.ctl .lab { display: flex; justify-content: space-between; gap: 12px; }
+.ctl .val { color: var(--ink); font-variant-numeric: tabular-nums; }
+.ctl input[type=range] { width: 100%; accent-color: var(--accent); }
+.controls > * { max-width: 100%; }
+.ctl .seg { flex-wrap: wrap; }
+.ctl .seg button { border-bottom: 1px solid var(--ink); margin-bottom: -1px; }
+.btn { font-family: var(--f-mono); font-size: 12px; letter-spacing: .04em; background: transparent; color: var(--ink); border: 1px solid var(--ink); padding: 6px 14px; cursor: pointer; }
+.btn:hover { background: var(--ink); color: var(--paper); }
+.hint { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-soft); }
+
+.fields { display: grid; gap: 0; margin: 0; max-width: 82ch; border-top: 1px solid var(--ink); }
+.fields div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px; border-bottom: 1px solid var(--rule); padding: 9px 0; }
+.fields dt { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); padding-top: 3px; }
+.fields dd { margin: 0; }
+.fields .ask dd { font-style: italic; }
+
+details.box { border-top: 1px solid var(--ink); max-width: 82ch; }
+details.box + details.box { border-top: 1px solid var(--rule); }
+details.box summary { cursor: pointer; list-style: none; padding: 10px 0; font-family: var(--f-mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; display: flex; justify-content: space-between; }
+details.box summary::-webkit-details-marker { display: none; }
+details.box summary::after { content: "+"; font-size: 15px; line-height: 1; }
+details.box[open] summary::after { content: "−"; }
+details.box .inner { padding: 2px 0 16px; display: grid; gap: 10px; }
+.eq { font-family: var(--f-text); font-size: 17px; line-height: 1.7; overflow-x: auto; }
+.eq div { white-space: nowrap; }
+.eq .note { white-space: normal; font-size: 14.5px; color: var(--ink-soft); }
+.eq i { font-style: italic; }
+pre.pseudo { font-family: var(--f-mono); font-size: 13px; line-height: 1.6; margin: 0; white-space: pre-wrap; overflow-x: auto; }
+.flow { max-width: 420px; }
+.flow svg { width: 100%; height: auto; display: block; }
+.flow rect, .flow path.d { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
+.flow path.a { fill: none; stroke: var(--ink); stroke-width: 1; }
+.flow text { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink); }
+.flow text.s { fill: var(--ink-soft); font-size: 9.5px; }
+
+footer.foot { border-top: 3px double var(--ink); padding-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 36px; font-size: 15px; }
+footer h3 { margin: 0 0 6px; font-family: var(--f-mono); font-weight: 400; font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+footer li .d { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-right: 6px; }
+.g { font-size: 13px; margin-right: 6px; }
+.g-est { color: var(--ink); } .g-lik { color: var(--accent); } .g-unv { color: var(--ochre); }
+.seq { display: flex; justify-content: space-between; gap: 16px; font-family: var(--f-mono); font-size: 12px; letter-spacing: .04em; border-top: 1px solid var(--rule); padding-top: 10px; }
+.seq a { text-decoration: none; }
+
+.glyph { width: 100%; max-width: 300px; height: auto; display: block; color: var(--ink); fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.glyph text { fill: var(--ink-soft); stroke: none; font-family: var(--f-mono); font-size: 9px; }
+.glyph .f { fill: currentColor; } .glyph .p { fill: var(--paper); } .glyph .a { stroke: var(--accent); } .glyph .af { fill: var(--accent); stroke: none; }
+.glyph .o { stroke: var(--ochre); } .glyph .of { fill: var(--ochre); stroke: none; } .glyph .ow { fill: var(--ochre); stroke: none; opacity: .18; }
+.glyph .d { stroke-dasharray: 3 3; } .glyph .t { stroke-width: .8; opacity: .55; } .glyph .n { stroke: none; }
+
+@media (max-width: 760px) {
+  .head { grid-template-columns: minmax(0, 1fr); }
+  .glyphbox { max-width: 320px; }
+  .panels { grid-template-columns: minmax(0, 1fr) !important; }
+  .fields div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+}
+</style></head><body>
+<div class="wrap">
+<div class="top"><a href="../index.html#noise-variability">← The Abstraction Atlas</a><span>Plate XXXIX</span><div class="seg" role="group" aria-label="Print"><button type="button" id="p-plate" aria-pressed="true">Plate</button><button type="button" id="p-cyan" aria-pressed="false">Cyanotype</button></div></div>
+<a class="strip" href="../index.html#noise-variability"><svg viewBox="0 -4 440 74" role="img" aria-label="Position on the Atlas"><line class="sl" x1="20" y1="16" x2="60" y2="16"/><line class="sl" x1="60" y1="16" x2="100" y2="16"/><line class="sl" x1="100" y1="16" x2="140" y2="16"/><line class="sl" x1="140" y1="16" x2="180" y2="16"/><line class="sl" x1="180" y1="16" x2="220" y2="16"/><line class="sl" x1="220" y1="16" x2="260" y2="16"/><line class="sl" x1="260" y1="16" x2="300" y2="16"/><line class="sl" x1="300" y1="16" x2="340" y2="16"/><line class="sl" x1="340" y1="16" x2="380" y2="16"/><line class="sl" x1="380" y1="16" x2="420" y2="16"/><path class="bl" d="M260,16 L270,40"/><path class="bl" d="M220,16 L214,40"/><path class="bl" d="M340,16 L340,40"/><path class="bl" d="M420,16 L408,40"/><path class="bl" d="M420,16 L432,40"/><circle class="sd" cx="20" cy="16" r="3.2"/><circle class="sd" cx="60" cy="16" r="3.2"/><circle class="sd" cx="100" cy="16" r="3.2"/><circle class="sd" cx="140" cy="16" r="3.2"/><circle class="sd" cx="180" cy="16" r="3.2"/><circle class="sd" cx="220" cy="16" r="3.2"/><circle class="sd" cx="260" cy="16" r="3.2"/><circle class="sd" cx="300" cy="16" r="3.2"/><circle class="sd" cx="340" cy="16" r="3.2"/><circle class="sd" cx="380" cy="16" r="3.2"/><circle class="sd" cx="420" cy="16" r="3.2"/><circle class="bd" cx="270" cy="40" r="2.8"/><circle class="bd" cx="214" cy="40" r="2.8"/><circle class="bd" cx="340" cy="40" r="2.8"/><circle class="bd" cx="408" cy="40" r="2.8"/><circle class="bd" cx="432" cy="40" r="2.8"/><circle class="md" cx="40" cy="62" r="2.8"/><circle class="md" cx="114" cy="62" r="2.8"/><circle class="md" cx="188" cy="62" r="2.8"/><circle class="md" cx="262" cy="62" r="2.8"/><circle class="md" cx="336" cy="62" r="2.8"/><circle class="md" cx="410" cy="62" r="2.8"/><circle class="hr" cx="410" cy="62" r="7"/><text x="0" y="5">DETAIL</text><text x="440" y="5" text-anchor="end">PARSIMONY</text><text x="0" y="52">MODULATORS</text></svg></a>
+<header class="head"><div><div class="kicker">Modulator plate</div><h1>Noise-Enhanced Signal Detection</h1><div class="sub">Acts on Ion Channels and Synapses, Spiking Network, Rate Population Model, Neural Field</div></div><figure class="glyphbox"><svg class="glyph" viewBox="0 0 220 110" aria-hidden="true"><path class="o" d="M24.0,8.0 L24.0,14.0"/><path class="o" d="M30.0,8.0 L30.0,14.0"/><path class="o" d="M36.0,8.0 L36.0,14.0"/><path class="o" d="M42.0,8.0 L42.0,14.0"/><path class="o" d="M48.0,8.0 L48.0,14.0"/><path class="o" d="M90.0,8.0 L90.0,14.0"/><path class="o" d="M120.0,8.0 L120.0,14.0"/><path class="o" d="M150.0,8.0 L150.0,14.0"/><path class="o" d="M168.0,8.0 L168.0,14.0"/><path class="o" d="M180.0,8.0 L180.0,14.0"/><path class="o" d="M186.0,8.0 L186.0,14.0"/><path class="o" d="M42.0,17.0 L42.0,23.0"/><path class="o" d="M54.0,17.0 L54.0,23.0"/><path class="o" d="M60.0,17.0 L60.0,23.0"/><path class="o" d="M72.0,17.0 L72.0,23.0"/><path class="o" d="M78.0,17.0 L78.0,23.0"/><path class="o" d="M96.0,17.0 L96.0,23.0"/><path class="o" d="M102.0,17.0 L102.0,23.0"/><path class="o" d="M114.0,17.0 L114.0,23.0"/><path class="o" d="M120.0,17.0 L120.0,23.0"/><path class="o" d="M150.0,17.0 L150.0,23.0"/><path class="o" d="M162.0,17.0 L162.0,23.0"/><path class="o" d="M174.0,17.0 L174.0,23.0"/><path class="o" d="M186.0,17.0 L186.0,23.0"/><path class="o" d="M96.0,26.0 L96.0,32.0"/><path class="o" d="M120.0,26.0 L120.0,32.0"/><path class="o" d="M126.0,26.0 L126.0,32.0"/><path class="o" d="M138.0,26.0 L138.0,32.0"/><path class="o" d="M174.0,26.0 L174.0,32.0"/><path class="o" d="M186.0,26.0 L186.0,32.0"/><path class="" d="M12.0,71.1 L14.0,72.7 L16.0,75.3 L18.0,73.4 L20.0,76.6 L22.0,80.3 L24.0,79.8 L26.0,74.6 L28.0,70.9 L30.0,71.5 L32.0,69.3 L34.0,73.2 L36.0,74.1 L38.0,77.3 L40.0,79.0 L42.0,81.5 L44.0,83.6 L46.0,77.7 L48.0,80.4 L50.0,81.4 L52.0,76.2 L54.0,72.3 L56.0,68.4 L58.0,72.2 L60.0,69.4 L62.0,68.8 L64.0,66.5 L66.0,66.8 L68.0,64.4 L70.0,66.3 L72.0,72.0 L74.0,76.7 L76.0,80.1 L78.0,79.9 L80.0,81.8 L82.0,76.0 L84.0,73.2 L86.0,74.9 L88.0,77.3 L90.0,73.4 L92.0,73.7 L94.0,74.9 L96.0,77.0 L98.0,73.5 L100.0,76.5 L102.0,78.3 L104.0,76.8 L106.0,80.7 L108.0,79.7 L110.0,75.4 L112.0,76.7 L114.0,78.7 L116.0,76.1 L118.0,78.7 L120.0,76.5 L122.0,76.7 L124.0,74.3 L126.0,76.4 L128.0,80.1 L130.0,76.1 L132.0,78.1 L134.0,79.4 L136.0,81.3 L138.0,81.0 L140.0,76.3 L142.0,72.6 L144.0,74.5 L146.0,75.8 L148.0,72.1 L150.0,74.5 L152.0,70.2 L154.0,74.2 L156.0,77.5 L158.0,77.5 L160.0,75.1 L162.0,71.7 L164.0,74.7 L166.0,78.1 L168.0,81.4 L170.0,80.9 L172.0,77.4 L174.0,76.8 L176.0,73.3 L178.0,74.5 L180.0,75.7 L182.0,71.9 L184.0,68.4 L186.0,73.6 L188.0,73.9 L190.0,77.4 L192.0,73.9 L194.0,73.5 L196.0,75.4 L198.0,74.5 L200.0,72.3 L202.0,70.0 L204.0,71.5 L206.0,70.6 L208.0,68.5 L210.0,73.8"/><path class="d t" d="M12.0,74.0 L210.0,74.0"/><text x="210" y="106" text-anchor="end">trial to trial</text></svg></figure></header>
+<div class="prose"><p>A weak periodic signal that never reaches a neuron's threshold leaves no trace in its spikes. Adding noise changes this: the fluctuations carry the voltage across threshold most often near the peaks of the signal, so the spikes begin to follow it. The effect is known as stochastic resonance.</p><p>A subthreshold sine wave drives a leaky integrate-and-fire neuron together with noise of adjustable strength. The left panel shows the signal, the membrane voltage and the spikes; the right panel shows how faithfully the spikes follow the signal across noise levels, with a marker at the current setting.</p><p>Without noise there are no spikes and nothing is transmitted. A moderate amount of noise lines the spikes up with the peaks of the signal, while strong noise produces spikes at any phase and buries the signal again. Fidelity therefore peaks at an intermediate noise level, one reason why variability in neural systems can be useful.</p></div>
+<section class="widget" aria-label="Interactive model"><div class="widget-in"><div class="panels" style="grid-template-columns:minmax(0,3fr) minmax(0,2fr)"><div class="panel"><h2>Signal, voltage and spikes</h2><div class="cv" data-aspect="0.62" data-maxh="480"><canvas id="vt" aria-label="Signal, voltage and spikes"></canvas></div><div class="readout" id="ro-vt"></div></div><div class="panel"><h2>Fidelity against noise</h2><div class="cv" data-aspect="0.9" data-maxh="480"><canvas id="fid" aria-label="Fidelity against noise"></canvas></div><div class="readout" id="ro-fid"></div></div></div><div class="controls" id="controls"></div></div></section>
+<dl class="fields"><div class="ask"><dt>Ask yourself</dt><dd>Would adding noise help a signal that already crosses threshold on its own? What does that say about when noise can be useful?</dd></div></dl>
+<details class="box"><summary>Equations</summary><div class="inner eq"><div>τ dV/dt = −(V − E<sub>L</sub>) + R (I<sub>0</sub> + I<sub>1</sub> sin 2πft) + σ √τ ξ(t)</div>
+<div>fidelity = correlation between the spike count in 20 ms bins and the signal</div>
+<div class="note">E<sub>L</sub> = −70 mV, θ = −50 mV, reset −70 mV, τ = 20 ms; RI<sub>0</sub> = 16 mV and RI<sub>1</sub> = 3 mV, so the noiseless voltage peaks about 1 mV below threshold; f = 5 Hz.</div></div></details>
+<details class="box"><summary>Pseudocode</summary><div class="inner"><pre class="pseudo">for each time step dt:
+    V ← V + dt/τ · (−(V − E_L) + R·(I_0 + I_1·sin 2πft)) + σ·√(dt/τ)·ξ
+    if V ≥ θ: record a spike, V ← V_reset
+fidelity ← correlation(spike counts in 20 ms bins, signal)</pre><div class="flow"><svg viewBox="0 0 420 172" aria-hidden="true"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" style="fill:var(--ink)"/></marker></defs><rect x="30" y="14" width="200" height="30"/><text x="130" y="33" text-anchor="middle">V ← V + drift + signal + noise</text><path class="a" d="M130,44 L130,62" marker-end="url(#ah)"/><path class="d" d="M130,62 L230,82.0 L130,102 L30,82.0 Z"/><text x="130" y="86.0" text-anchor="middle">V ≥ θ ?</text><path class="a" d="M230,82.0 L276,82.0" marker-end="url(#ah)"/><text class="s" x="238" y="77.0">yes</text><rect x="280" y="67.0" width="130" height="30"/><text x="345" y="86.0" text-anchor="middle">spike; V ← V_reset</text><text class="s" x="136" y="114">no</text><path class="a" d="M130,102 L130,120" marker-end="url(#ah)"/><rect x="30" y="120" width="200" height="30"/><text x="130" y="139" text-anchor="middle">t ← t + dt</text><path class="a" d="M345,97.0 L345,135.0 L230,135.0" marker-end="url(#ah)"/><path class="a" d="M30,135.0 L12,135.0 L12,29.0 L26,29.0" marker-end="url(#ah)"/><text class="s" x="16" y="164">next step</text></svg></div></div></details>
+<footer class="foot"><div><h3>Originators</h3><ul><li><span class="g g-lik" title="likely">◐</span>Benzi, Sutera and Vulpiani (1981), stochastic resonance</li><li><span class="g g-lik" title="likely">◐</span>Longtin, Bulsara and Moss (1991); Douglass et al. (1993), in neurons</li></ul></div><div><h3>On the Atlas</h3><ul><li><span class="d">Plate I</span><a href="../index.html#noise-variability">This node on the Atlas</a></li><li><span class="d">Acts on</span><a href="02-stochastic-channel-gating.html">Stochastic Channel Gating</a></li><li><span class="d">Acts on</span><a href="12-balanced-excitatory-inhibitory-network.html">Balanced Excitatory–Inhibitory Network</a></li><li><span class="d">Acts on</span><a href="14-excitatory-inhibitory-rate-model.html">Excitatory–Inhibitory Rate Model</a></li><li><span class="d">Acts on</span><a href="20-neural-field-equations.html">Neural Field Equations</a></li></ul></div></footer>
+<nav class="seq"><a href="38-homeostatic-synaptic-scaling.html">← Plate XXXVIII · Homeostatic Synaptic Scaling</a><span></span></nav>
+</div>
+<script>/* Shared runtime for Atlas plates: colours, canvases, plots, controls, animation. */
+const P = (() => {
+  const root = document.documentElement;
+  const col = {};
+  function readCols() {
+    const cs = getComputedStyle(root);
+    col.paper = cs.getPropertyValue('--paper').trim();
+    col.ink = cs.getPropertyValue('--ink').trim();
+    col.soft = cs.getPropertyValue('--ink-soft').trim();
+    col.accent = cs.getPropertyValue('--accent').trim();
+    col.ochre = cs.getPropertyValue('--ochre').trim();
+    col.rule = cs.getPropertyValue('--rule').trim();
+  }
+  readCols();
+
+  /* canvases */
+  const cvs = {}, draws = [];
+  let pending = false;
+  function redrawAll() { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; readCols(); draws.forEach(f => { try { f(); } catch (e) { console.error(e); } }); }); }
+  function setup(el) {
+    const wrap = el.parentElement;
+    const asp = +wrap.dataset.aspect || 0.6, maxh = +wrap.dataset.maxh || 520;
+    const o = { el, ctx: el.getContext('2d'), w: 0, h: 0 };
+    o.fit = () => {
+      const w = Math.max(10, wrap.clientWidth), h = Math.min(maxh, Math.round(w * asp));
+      wrap.style.height = h + 'px';
+      const dpr = window.devicePixelRatio || 1;
+      el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+      o.w = w; o.h = h; o.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    o.fit();
+    let lw = wrap.clientWidth;
+    new ResizeObserver(() => { if (wrap.clientWidth !== lw) { lw = wrap.clientWidth; o.fit(); redrawAll(); } }).observe(wrap);
+    return o;
+  }
+  document.querySelectorAll('.panel canvas').forEach(el => cvs[el.id] = setup(el));
+  const cv = id => cvs[id];
+  const clear = c => { c.ctx.clearRect(0, 0, c.w, c.h); };
+  const onDraw = f => { draws.push(f); };
+
+  /* numbers */
+  function niceTicks(a, b, n = 5) {
+    const span = b - a; if (!(span > 0)) return [a];
+    const s0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(s0))), e = s0 / mag;
+    const st = (e >= 7.5 ? 10 : e >= 3.5 ? 5 : e >= 1.5 ? 2 : 1) * mag;
+    const t = []; for (let v = Math.ceil(a / st - 1e-9) * st; v <= b + st * 1e-9; v += st) t.push(+v.toFixed(10));
+    return t;
+  }
+  const fmt = v => { const a = Math.abs(v); if (a === 0) return '0'; if (a >= 1e4 || a < 1e-3) return v.toExponential(0).replace('e+', 'e'); return String(+v.toPrecision(4)); };
+
+  /* plot */
+  class Plot {
+    constructor(c, o) {
+      this.c = c; this.g = c.ctx;
+      const b = o.box || [0, 0, c.w, c.h];
+      const pad = Object.assign({ l: 48, r: 12, t: 10, b: 34 }, o.pad || {});
+      this.L = b[0] + pad.l; this.R = b[0] + b[2] - pad.r; this.T = b[1] + pad.t; this.B = b[1] + b[3] - pad.b;
+      this.x0 = o.x[0]; this.x1 = o.x[1]; this.y0 = o.y[0]; this.y1 = o.y[1];
+      this.xlog = !!o.xlog; this.ylog = !!o.ylog;
+    }
+    tx(v, a, b, log) { return log ? (Math.log10(v) - Math.log10(a)) / (Math.log10(b) - Math.log10(a)) : (v - a) / (b - a); }
+    X(v) { return this.L + this.tx(v, this.x0, this.x1, this.xlog) * (this.R - this.L); }
+    Y(v) { return this.B - this.tx(v, this.y0, this.y1, this.ylog) * (this.B - this.T); }
+    ix(px) { const t = (px - this.L) / (this.R - this.L); return this.xlog ? Math.pow(10, Math.log10(this.x0) + t * (Math.log10(this.x1) - Math.log10(this.x0))) : this.x0 + t * (this.x1 - this.x0); }
+    iy(py) { const t = (this.B - py) / (this.B - this.T); return this.ylog ? Math.pow(10, Math.log10(this.y0) + t * (Math.log10(this.y1) - Math.log10(this.y0))) : this.y0 + t * (this.y1 - this.y0); }
+    ticks(a, b, log, n) {
+      if (!log) return niceTicks(a, b, n);
+      const t = []; for (let k = Math.ceil(Math.log10(a) - 1e-9); k <= Math.floor(Math.log10(b) + 1e-9); k++) t.push(Math.pow(10, k));
+      return t;
+    }
+    axes(o = {}) {
+      const g = this.g;
+      g.save(); g.strokeStyle = col.ink; g.fillStyle = col.soft; g.lineWidth = 1;
+      g.font = '10.5px "Courier Prime", "Courier New", monospace';
+      if (o.grid !== false) {
+        g.strokeStyle = col.rule; g.lineWidth = .7;
+        (o.yt || this.ticks(this.y0, this.y1, this.ylog, o.ny || 4)).forEach(v => { const y = Math.round(this.Y(v)) + .5; g.beginPath(); g.moveTo(this.L, y); g.lineTo(this.R, y); g.stroke(); });
+        g.strokeStyle = col.ink; g.lineWidth = 1;
+      }
+      g.beginPath(); g.moveTo(this.L + .5, this.T); g.lineTo(this.L + .5, this.B + .5); g.lineTo(this.R, this.B + .5); g.stroke();
+      if (!o.noxt) {
+        g.textAlign = 'center'; g.textBaseline = 'top';
+        (o.xt || this.ticks(this.x0, this.x1, this.xlog, o.nx || 5)).forEach(v => { const x = this.X(v); if (x < this.L - 1 || x > this.R + 1) return; g.beginPath(); g.moveTo(x, this.B); g.lineTo(x, this.B + 4); g.stroke(); g.fillText((o.xf || fmt)(v), x, this.B + 6); });
+      }
+      if (!o.noyt) {
+        g.textAlign = 'right'; g.textBaseline = 'middle';
+        (o.yt || this.ticks(this.y0, this.y1, this.ylog, o.ny || 4)).forEach(v => { const y = this.Y(v); if (y < this.T - 1 || y > this.B + 1) return; g.beginPath(); g.moveTo(this.L - 4, y); g.lineTo(this.L, y); g.stroke(); g.fillText((o.yf || fmt)(v), this.L - 6, y); });
+      }
+      g.font = 'italic 13px Spectral, Georgia, serif'; g.fillStyle = col.ink;
+      if (o.xl) { g.textAlign = 'right'; g.textBaseline = 'bottom'; g.fillText(o.xl, this.R, this.B - 4); }
+      if (o.yl) { g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText(o.yl, this.L + 6, this.T); }
+      g.restore();
+    }
+    clip(f) { const g = this.g; g.save(); g.beginPath(); g.rect(this.L, this.T - 2, this.R - this.L, this.B - this.T + 4); g.clip(); f(); g.restore(); }
+    style(s) { const g = this.g; g.strokeStyle = s.color || col.ink; g.lineWidth = s.w || 1.4; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.setLineDash(s.dash || []); g.lineJoin = 'round'; g.lineCap = 'round'; }
+    line(xs, ys, s = {}) {
+      const g = this.g; this.clip(() => {
+        this.style(s); g.beginPath(); let on = false;
+        for (let i = 0; i < xs.length; i++) { const y = ys[i]; if (y == null || !isFinite(y)) { on = false; continue; } const px = this.X(xs[i]), py = this.Y(y); if (!on) { g.moveTo(px, py); on = true; } else g.lineTo(px, py); }
+        g.stroke();
+      });
+    }
+    fn(f, s = {}, n = 200) { const xs = [], ys = []; for (let i = 0; i <= n; i++) { const x = this.xlog ? Math.pow(10, Math.log10(this.x0) + i / n * (Math.log10(this.x1) - Math.log10(this.x0))) : this.x0 + i / n * (this.x1 - this.x0); xs.push(x); ys.push(f(x)); } this.line(xs, ys, s); }
+    steps(xs, ys, s = {}) { const X = [], Y = []; for (let i = 0; i < xs.length; i++) { if (i) { X.push(xs[i]); Y.push(ys[i - 1]); } X.push(xs[i]); Y.push(ys[i]); } this.line(X, Y, s); }
+    dots(xs, ys, s = {}) {
+      const g = this.g; this.clip(() => {
+        g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.fillStyle = s.color || col.ink; g.strokeStyle = s.color || col.ink; g.lineWidth = 1;
+        for (let i = 0; i < xs.length; i++) { if (!isFinite(ys[i])) continue; g.beginPath(); g.arc(this.X(xs[i]), this.Y(ys[i]), s.r || 2.5, 0, 7); s.hollow ? (g.fillStyle = col.paper, g.fill(), g.stroke()) : g.fill(); }
+        g.globalAlpha = 1;
+      });
+    }
+    vline(x, s = {}) { const g = this.g; this.style(s); g.beginPath(); g.moveTo(this.X(x), s.y0 != null ? this.Y(s.y0) : this.T); g.lineTo(this.X(x), s.y1 != null ? this.Y(s.y1) : this.B); g.stroke(); g.globalAlpha = 1; g.setLineDash([]); }
+    hline(y, s = {}) { const g = this.g; this.style(s); g.beginPath(); g.moveTo(this.L, this.Y(y)); g.lineTo(this.R, this.Y(y)); g.stroke(); g.globalAlpha = 1; g.setLineDash([]); }
+    band(a, b, s = {}) { const g = this.g; g.save(); g.globalAlpha = s.alpha || .15; g.fillStyle = s.color || col.ochre; g.fillRect(this.X(a), this.T, this.X(b) - this.X(a), this.B - this.T); g.restore(); }
+    text(t, x, y, s = {}) { label(this.g, t, this.X(x), this.Y(y), s); }
+  }
+  function label(g, t, x, y, s = {}) {
+    g.save(); g.fillStyle = s.color || col.ink; g.globalAlpha = s.alpha == null ? 1 : s.alpha;
+    g.font = s.font || (s.mono ? '10.5px "Courier Prime", "Courier New", monospace' : (s.italic === false ? '' : 'italic ') + (s.size || 13) + 'px Spectral, Georgia, serif');
+    g.textAlign = s.align || 'left'; g.textBaseline = s.base || 'middle'; g.fillText(t, x, y); g.restore();
+  }
+  const plot = (c, o) => new Plot(c, o);
+
+  /* drawing helpers in pixel space */
+  function circle(g, x, y, r, s = {}) { g.save(); g.beginPath(); g.arc(x, y, r, 0, 7); if (s.fill) { g.fillStyle = s.fill; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.fill(); g.globalAlpha = 1; } if (s.stroke !== false) { g.strokeStyle = s.stroke || col.ink; g.lineWidth = s.w || 1.2; g.setLineDash(s.dash || []); g.stroke(); } g.restore(); }
+  function seg(g, x1, y1, x2, y2, s = {}) { g.save(); g.strokeStyle = s.color || col.ink; g.lineWidth = s.w || 1.2; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.setLineDash(s.dash || []); g.lineCap = 'round'; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.restore(); }
+  function arrow(g, x1, y1, x2, y2, s = {}) { seg(g, x1, y1, x2, y2, s); const a = Math.atan2(y2 - y1, x2 - x1), h = s.head || 7; g.save(); g.strokeStyle = s.color || col.ink; g.lineWidth = s.w || 1.2; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.beginPath(); g.moveTo(x2 - h * Math.cos(a - .42), y2 - h * Math.sin(a - .42)); g.lineTo(x2, y2); g.lineTo(x2 - h * Math.cos(a + .42), y2 - h * Math.sin(a + .42)); g.stroke(); g.restore(); }
+  function mix(a, b, t) { /* mix two css colours by drawing; returns rgba string of a with alpha t */ return { a, b, t }; }
+  function shade(c, t) { /* colour c (hex or rgb) at alpha t */ const h = c.replace('#', ''); if (h.length >= 6) { const r = parseInt(h.slice(0, 2), 16), gg = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); return `rgba(${r},${gg},${b},${Math.max(0, Math.min(1, t)).toFixed(3)})`; } return c; }
+
+  /* controls */
+  const box = document.getElementById('controls');
+  function ctl(label) { const d = document.createElement('div'); d.className = 'ctl'; const l = document.createElement('div'); l.className = 'lab'; const a = document.createElement('span'); a.textContent = label; const v = document.createElement('span'); v.className = 'val'; l.append(a, v); d.append(l); box.append(d); return { d, v }; }
+  let nid = 0;
+  function slider(o) {
+    const { d, v } = ctl(o.label); const inp = document.createElement('input'); inp.type = 'range'; inp.id = 'c' + (++nid);
+    inp.setAttribute('aria-label', o.label);
+    const lg = !!o.log; inp.min = lg ? Math.log10(o.min) : o.min; inp.max = lg ? Math.log10(o.max) : o.max; inp.step = o.step || (lg ? .01 : (o.max - o.min) / 200); inp.value = lg ? Math.log10(o.value) : o.value;
+    d.append(inp);
+    let val = o.value; const show = () => { v.textContent = (o.fmt || fmt)(val); }; show();
+    inp.addEventListener('input', () => { val = lg ? Math.pow(10, +inp.value) : +inp.value; if (o.round) val = Math.round(val); show(); o.on && o.on(val); });
+    return { get: () => val, set: x => { val = x; inp.value = lg ? Math.log10(x) : x; show(); } };
+  }
+  function choice(o) {
+    const { d, v } = ctl(o.label); v.remove(); const s = document.createElement('div'); s.className = 'seg'; s.setAttribute('role', 'group'); s.setAttribute('aria-label', o.label);
+    let val = o.value; const bs = o.options.map(([k, l]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = l; b.setAttribute('aria-pressed', k === val); b.addEventListener('click', () => { val = k; bs.forEach((x, i) => x.setAttribute('aria-pressed', o.options[i][0] === val)); o.on && o.on(val); }); s.append(b); return b; });
+    d.append(s); return { get: () => val };
+  }
+  function button(label, on) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = label; b.addEventListener('click', on); box.append(b); return b; }
+
+  /* animation */
+  function loop(step) { let last = null; function f(t) { if (!document.hidden && last != null) step(Math.min(0.05, (t - last) / 1000)); last = t; requestAnimationFrame(f); } requestAnimationFrame(f); }
+
+  /* randomness */
+  function rng(seed) { let s = seed >>> 0 || 1; return () => { s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function gauss(r) { let u = 0; while (u === 0) u = r(); const v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+
+  /* pointer dragging on a canvas */
+  function drag(c, h) {
+    const el = c.el; let on = false;
+    const pt = e => { const r = el.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    el.addEventListener('pointerdown', e => { on = true; try { el.setPointerCapture(e.pointerId); } catch (x) {} h.down && h.down(pt(e)); e.preventDefault(); });
+    el.addEventListener('pointermove', e => { const p = pt(e); if (on) h.move && h.move(p); else h.hover && h.hover(p); });
+    const up = e => { if (on) { on = false; h.up && h.up(pt(e)); } };
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  }
+  function readout(id, html) { const el = document.getElementById('ro-' + id); if (el) el.innerHTML = html; }
+
+  /* print toggle */
+  const bp = document.getElementById('p-plate'), bc = document.getElementById('p-cyan');
+  function setPrint(p, save) {
+    if (p === 'cyan') root.setAttribute('data-print', 'cyan'); else root.removeAttribute('data-print');
+    bp.setAttribute('aria-pressed', p !== 'cyan'); bc.setAttribute('aria-pressed', p === 'cyan');
+    if (save) try { localStorage.setItem('atlas-print', p); } catch (e) {}
+    redrawAll();
+  }
+  bp.addEventListener('click', () => setPrint('plate', true));
+  bc.addEventListener('click', () => setPrint('cyan', true));
+  try { setPrint(localStorage.getItem('atlas-print') === 'cyan' ? 'cyan' : 'plate'); } catch (e) { setPrint('plate'); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(redrawAll);
+
+  return { col, cv, clear, onDraw, redraw: redrawAll, plot, label, circle, seg, arrow, shade, slider, choice, button, loop, rng, gauss, drag, readout, niceTicks, fmt };
+})();
+</script>
+<script>(function () {
+const EL = -70, th = -50, Vr = -70, tau = 20, I0 = 16, I1 = 3, fr = 5, dt = .1;
+let sig = 3, curve = null, trace = null, cur = 0;
+const s = t => Math.sin(2 * Math.PI * fr * t / 1000);
+function sim(sg, T, rec, seed) {
+  const r = P.rng(seed); let V = EL; const spk = [], o = { t: [], V: [] }; const sq = Math.sqrt(dt / tau);
+  for (let i = 0, t = 0; t < T; i++, t = i * dt) { V += dt / tau * (-(V - EL) + I0 + I1 * s(t)) + sg * sq * P.gauss(r); if (V >= th) { spk.push(t); V = Vr; } if (rec && i % 5 === 0) { o.t.push(t); o.V.push(V); } }
+  const nb = Math.floor(T / 20), cnt = new Array(nb).fill(0); spk.forEach(x => { const k = Math.floor(x / 20); if (k < nb) cnt[k]++; });
+  const sg_ = Array.from({ length: nb }, (_, k) => s(k * 20 + 10)); const mc = cnt.reduce((a, b) => a + b, 0) / nb, ms = sg_.reduce((a, b) => a + b, 0) / nb;
+  let num = 0, da = 0, db = 0; for (let k = 0; k < nb; k++) { num += (cnt[k] - mc) * (sg_[k] - ms); da += (cnt[k] - mc) ** 2; db += (sg_[k] - ms) ** 2; }
+  o.spk = spk; o.fid = da > 0 ? num / Math.sqrt(da * db) : 0; o.rate = spk.length / (T / 1000); return o;
+}
+function compute() { curve = []; for (let k = 0; k <= 24; k++) { const sg = k * .5; let fsum = 0; for (let rep = 0; rep < 4; rep++) fsum += sim(sg, 6000, false, 100 + k * 7 + rep).fid; curve.push([sg, fsum / 4]); } }
+function run() { trace = sim(sig, 1000, true, 5); cur = sim(sig, 6000, false, 77).fid; }
+function draw() {
+  const col = P.col; let c = P.cv('vt'), g = c.ctx; P.clear(c);
+  const p = P.plot(c, { box: [0, 0, c.w, c.h * .25], x: [0, 1000], y: [-1.2, 1.2], pad: { b: 4 } });
+  p.axes({ noxt: true, noyt: true, grid: false }); p.fn(s, { color: col.ochre, w: 1.6 }, 300); P.label(g, 'signal', 6, p.Y(.6), { mono: true, color: col.ochre });
+  const q = P.plot(c, { box: [0, c.h * .25, c.w, c.h * .75], x: [0, 1000], y: [-80, -30] });
+  q.axes({ xl: 'time (ms)', yl: 'V (mV)' }); q.hline(th, { color: col.soft, dash: [4, 3] }); q.text('θ', 4, th + 2.5, { color: col.soft });
+  q.line(trace.t, trace.V, { color: col.ink, w: 1 }); trace.spk.forEach(x => q.vline(x, { y0: th, y1: -31, color: col.accent, w: 1.4 }));
+  P.readout('vt', `${trace.spk.length} spikes in 1 s · σ = ${sig.toFixed(1)} mV`);
+  c = P.cv('fid'); P.clear(c);
+  const ym = Math.max(.3, ...curve.map(x => x[1])) * 1.15, r = P.plot(c, { x: [0, 12], y: [0, ym] });
+  r.axes({ xl: 'noise σ (mV)', yl: 'fidelity' }); r.line(curve.map(x => x[0]), curve.map(x => x[1]), { color: col.ink, w: 2 }); r.dots(curve.map(x => x[0]), curve.map(x => x[1]), { r: 2.2 });
+  r.dots([sig], [Math.max(0, cur)], { r: 6, color: col.accent });
+  const best = curve.reduce((b, x) => x[1] > b[1] ? x : b, curve[0]);
+  P.readout('fid', `fidelity ${Math.max(0, cur).toFixed(2)} at σ = ${sig.toFixed(1)} mV · best near σ ≈ ${best[0].toFixed(1)} mV`);
+}
+P.slider({ label: 'Noise σ', min: 0, max: 12, step: .1, value: sig, fmt: v => v.toFixed(1) + ' mV', on: v => { sig = v; run(); draw(); } });
+compute(); run();
+P.onDraw(draw); draw();
+
+})();</script>
+</body></html>

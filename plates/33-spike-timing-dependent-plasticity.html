@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spike-Timing-Dependent Plasticity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Spectral+SC:wght@500&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap">
+<style>:root {
+  --paper: #e4e6e3;
+  --ink: #191d24;
+  --ink-soft: #565d68;
+  --accent: #1d3b63;
+  --ochre: #94661c;
+  --rule: #191d2433;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .12 0 0 0 0 .16 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --f-display: "Spectral SC", "Cormorant SC", Georgia, serif;
+  --f-text: "Spectral", Georgia, "Times New Roman", serif;
+  --f-mono: "Courier Prime", "Courier New", ui-monospace, monospace;
+  color-scheme: light;
+}
+:root[data-print="cyan"] {
+  --paper: #c7dbec;
+  --ink: #0a2350;
+  --ink-soft: #2f4f7e;
+  --accent: #a2352a;
+  --ochre: #7f5512;
+  --rule: #0a235038;
+  --grain:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .04 0 0 0 0 .14 0 0 0 0 .34 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.00625' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .05 0 0 0 0 .2 0 0 0 0 .48 0 0 0 .8 -.33'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  background-color: var(--paper); background-image: var(--grain);
+  color: var(--ink);
+  font-family: var(--f-text); font-size: 16.5px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 48px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 22px; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.top { display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: space-between; align-items: center; font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; color: var(--ink-soft); border-bottom: 1px solid var(--ink); padding-bottom: 10px; }
+.top a { color: var(--ink); text-decoration: none; text-transform: uppercase; }
+.top a:hover { color: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--ink); }
+.seg button { font-family: var(--f-mono); font-size: 12px; background: transparent; color: var(--ink); border: 0; padding: 4px 11px; cursor: pointer; letter-spacing: .04em; }
+.seg button + button { border-left: 1px solid var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+.strip { display: block; max-width: 460px; }
+.strip svg { width: 100%; height: auto; display: block; overflow: visible; }
+.strip .sd { fill: var(--ink); }
+.strip .bd { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
+.strip .md { fill: var(--paper); stroke: var(--ochre); stroke-width: 1; stroke-dasharray: 1.5 1.5; }
+.strip .sl { stroke: var(--ink); stroke-width: 1.2; }
+.strip .bl { stroke: var(--ink); stroke-width: .7; fill: none; opacity: .6; }
+.strip .hl { stroke: var(--accent); stroke-width: 3.2; fill: none; }
+.strip .hr { fill: none; stroke: var(--accent); stroke-width: 1.4; }
+.strip text { font-family: var(--f-mono); font-size: 7.5px; fill: var(--ink-soft); letter-spacing: .05em; }
+
+.head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 300px); gap: 18px 36px; align-items: end; }
+.kicker { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+h1 { font-family: var(--f-display); font-weight: 500; font-size: clamp(30px, 4.4vw, 48px); line-height: 1.04; letter-spacing: .01em; margin: 6px 0 4px; text-wrap: balance; }
+.sub { font-family: var(--f-mono); font-size: 12.5px; color: var(--ink-soft); }
+.glyphbox { margin: 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 6px 0; display: flex; align-items: center; gap: 6px; }
+.glyphbox .to { font-family: var(--f-mono); color: var(--ink-soft); }
+.glyphbox.pair .glyph { max-width: 46%; }
+
+.prose { max-width: 70ch; display: grid; gap: 10px; }
+.prose p { margin: 0; }
+.prose a.term { color: inherit; text-decoration: underline dotted var(--accent); text-underline-offset: 3px; }
+
+.widget { border: 1px solid var(--ink); padding: 5px; position: relative; }
+.widget::before { content: ""; position: absolute; inset: 3px; border: 1px solid var(--rule); pointer-events: none; }
+.widget-in { padding: 14px 16px 16px; display: grid; gap: 14px; }
+.panels { display: grid; gap: 16px 22px; align-items: start; }
+.panel { min-width: 0; display: grid; gap: 4px; }
+.panel h2 { margin: 0; font-family: var(--f-mono); font-weight: 400; font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.panel .cv { position: relative; width: 100%; }
+.panel canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.readout { font-family: var(--f-mono); font-size: 12px; color: var(--ink-soft); min-height: 1.4em; font-variant-numeric: tabular-nums; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: end; border-top: 1px solid var(--rule); padding-top: 12px; }
+.ctl { display: grid; gap: 3px; font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-soft); letter-spacing: .04em; min-width: 180px; }
+.ctl .lab { display: flex; justify-content: space-between; gap: 12px; }
+.ctl .val { color: var(--ink); font-variant-numeric: tabular-nums; }
+.ctl input[type=range] { width: 100%; accent-color: var(--accent); }
+.controls > * { max-width: 100%; }
+.ctl .seg { flex-wrap: wrap; }
+.ctl .seg button { border-bottom: 1px solid var(--ink); margin-bottom: -1px; }
+.btn { font-family: var(--f-mono); font-size: 12px; letter-spacing: .04em; background: transparent; color: var(--ink); border: 1px solid var(--ink); padding: 6px 14px; cursor: pointer; }
+.btn:hover { background: var(--ink); color: var(--paper); }
+.hint { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-soft); }
+
+.fields { display: grid; gap: 0; margin: 0; max-width: 82ch; border-top: 1px solid var(--ink); }
+.fields div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px; border-bottom: 1px solid var(--rule); padding: 9px 0; }
+.fields dt { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); padding-top: 3px; }
+.fields dd { margin: 0; }
+.fields .ask dd { font-style: italic; }
+
+details.box { border-top: 1px solid var(--ink); max-width: 82ch; }
+details.box + details.box { border-top: 1px solid var(--rule); }
+details.box summary { cursor: pointer; list-style: none; padding: 10px 0; font-family: var(--f-mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; display: flex; justify-content: space-between; }
+details.box summary::-webkit-details-marker { display: none; }
+details.box summary::after { content: "+"; font-size: 15px; line-height: 1; }
+details.box[open] summary::after { content: "−"; }
+details.box .inner { padding: 2px 0 16px; display: grid; gap: 10px; }
+.eq { font-family: var(--f-text); font-size: 17px; line-height: 1.7; overflow-x: auto; }
+.eq div { white-space: nowrap; }
+.eq .note { white-space: normal; font-size: 14.5px; color: var(--ink-soft); }
+.eq i { font-style: italic; }
+pre.pseudo { font-family: var(--f-mono); font-size: 13px; line-height: 1.6; margin: 0; white-space: pre-wrap; overflow-x: auto; }
+.flow { max-width: 420px; }
+.flow svg { width: 100%; height: auto; display: block; }
+.flow rect, .flow path.d { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
+.flow path.a { fill: none; stroke: var(--ink); stroke-width: 1; }
+.flow text { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink); }
+.flow text.s { fill: var(--ink-soft); font-size: 9.5px; }
+
+footer.foot { border-top: 3px double var(--ink); padding-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 36px; font-size: 15px; }
+footer h3 { margin: 0 0 6px; font-family: var(--f-mono); font-weight: 400; font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+footer li .d { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-right: 6px; }
+.g { font-size: 13px; margin-right: 6px; }
+.g-est { color: var(--ink); } .g-lik { color: var(--accent); } .g-unv { color: var(--ochre); }
+.seq { display: flex; justify-content: space-between; gap: 16px; font-family: var(--f-mono); font-size: 12px; letter-spacing: .04em; border-top: 1px solid var(--rule); padding-top: 10px; }
+.seq a { text-decoration: none; }
+
+.glyph { width: 100%; max-width: 300px; height: auto; display: block; color: var(--ink); fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.glyph text { fill: var(--ink-soft); stroke: none; font-family: var(--f-mono); font-size: 9px; }
+.glyph .f { fill: currentColor; } .glyph .p { fill: var(--paper); } .glyph .a { stroke: var(--accent); } .glyph .af { fill: var(--accent); stroke: none; }
+.glyph .o { stroke: var(--ochre); } .glyph .of { fill: var(--ochre); stroke: none; } .glyph .ow { fill: var(--ochre); stroke: none; opacity: .18; }
+.glyph .d { stroke-dasharray: 3 3; } .glyph .t { stroke-width: .8; opacity: .55; } .glyph .n { stroke: none; }
+
+@media (max-width: 760px) {
+  .head { grid-template-columns: minmax(0, 1fr); }
+  .glyphbox { max-width: 320px; }
+  .panels { grid-template-columns: minmax(0, 1fr) !important; }
+  .fields div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+}
+</style></head><body>
+<div class="wrap">
+<div class="top"><a href="../index.html#long-term-plasticity">← The Abstraction Atlas</a><span>Plate XXXIII</span><div class="seg" role="group" aria-label="Print"><button type="button" id="p-plate" aria-pressed="true">Plate</button><button type="button" id="p-cyan" aria-pressed="false">Cyanotype</button></div></div>
+<a class="strip" href="../index.html#long-term-plasticity"><svg viewBox="0 -4 440 74" role="img" aria-label="Position on the Atlas"><line class="sl" x1="20" y1="16" x2="60" y2="16"/><line class="sl" x1="60" y1="16" x2="100" y2="16"/><line class="sl" x1="100" y1="16" x2="140" y2="16"/><line class="sl" x1="140" y1="16" x2="180" y2="16"/><line class="sl" x1="180" y1="16" x2="220" y2="16"/><line class="sl" x1="220" y1="16" x2="260" y2="16"/><line class="sl" x1="260" y1="16" x2="300" y2="16"/><line class="sl" x1="300" y1="16" x2="340" y2="16"/><line class="sl" x1="340" y1="16" x2="380" y2="16"/><line class="sl" x1="380" y1="16" x2="420" y2="16"/><path class="bl" d="M260,16 L270,40"/><path class="bl" d="M220,16 L214,40"/><path class="bl" d="M340,16 L340,40"/><path class="bl" d="M420,16 L408,40"/><path class="bl" d="M420,16 L432,40"/><circle class="sd" cx="20" cy="16" r="3.2"/><circle class="sd" cx="60" cy="16" r="3.2"/><circle class="sd" cx="100" cy="16" r="3.2"/><circle class="sd" cx="140" cy="16" r="3.2"/><circle class="sd" cx="180" cy="16" r="3.2"/><circle class="sd" cx="220" cy="16" r="3.2"/><circle class="sd" cx="260" cy="16" r="3.2"/><circle class="sd" cx="300" cy="16" r="3.2"/><circle class="sd" cx="340" cy="16" r="3.2"/><circle class="sd" cx="380" cy="16" r="3.2"/><circle class="sd" cx="420" cy="16" r="3.2"/><circle class="bd" cx="270" cy="40" r="2.8"/><circle class="bd" cx="214" cy="40" r="2.8"/><circle class="bd" cx="340" cy="40" r="2.8"/><circle class="bd" cx="408" cy="40" r="2.8"/><circle class="bd" cx="432" cy="40" r="2.8"/><circle class="md" cx="40" cy="62" r="2.8"/><circle class="md" cx="114" cy="62" r="2.8"/><circle class="md" cx="188" cy="62" r="2.8"/><circle class="md" cx="262" cy="62" r="2.8"/><circle class="md" cx="336" cy="62" r="2.8"/><circle class="md" cx="410" cy="62" r="2.8"/><circle class="hr" cx="40" cy="62" r="7"/><text x="0" y="5">DETAIL</text><text x="440" y="5" text-anchor="end">PARSIMONY</text><text x="0" y="52">MODULATORS</text></svg></a>
+<header class="head"><div><div class="kicker">Modulator plate</div><h1>Spike-Timing-Dependent Plasticity</h1><div class="sub">Acts on Spiking Network, Rate Population Model, Artificial Neural Network, Attractor Network</div></div><figure class="glyphbox"><svg class="glyph" viewBox="0 0 220 110" aria-hidden="true"><path d="M60.0,21.2 L60.0,33.2"/><ellipse cx="60.0" cy="41.2" rx="8.8" ry="8.0"/><circle class="f n" cx="56.8" cy="39.6" r="1.4"/><circle class="f n" cx="62.8" cy="43.6" r="1.4"/><circle class="f n" cx="60.8" cy="37.2" r="1.4"/><path d="M48.8,50.8 C48.8,62.8 71.2,62.8 71.2,50.8"/><path class="" d="M60.0,60.4 L60.0,74.0"/><path d="M53.6,52.4 L66.4,52.4" style="stroke-width:1.6"/><path d="M160.0,2.8 L160.0,20.8"/><ellipse cx="160.0" cy="32.8" rx="13.2" ry="12.0"/><circle class="f n" cx="155.2" cy="30.4" r="2.2"/><circle class="f n" cx="164.2" cy="36.4" r="2.2"/><circle class="f n" cx="161.2" cy="26.8" r="2.2"/><path d="M143.2,47.2 C143.2,65.2 176.8,65.2 176.8,47.2"/><path class="" d="M160.0,61.6 L160.0,82.0"/><path d="M150.4,49.6 L169.6,49.6" style="stroke-width:3.6"/><path class="o" d="M92.0,52.0 L126.0,52.0 M120.6,54.6 L126.0,52.0 L120.6,49.4"/><text x="60" y="106" text-anchor="middle">before</text><text x="160" y="106" text-anchor="middle">after</text><text x="109" y="44" text-anchor="middle">Δw</text></svg></figure></header>
+<div class="prose"><p>Hebbian learning strengthens a synapse when the presynaptic and postsynaptic neurons are active together. Spike-timing-dependent plasticity makes the rule precise to the millisecond: the change in weight depends on the interval Δt = t<sub>post</sub> − t<sub>pre</sub> between a presynaptic and a postsynaptic spike, through a learning window measured in experiments.</p><p>Drag the two spikes along their traces. The bracket shows Δt, the window on the right marks where that interval falls, and the synapse at the far right thickens or thins accordingly. Choose another window shape, and press the repeat button to apply the same pairing again and again.</p><p>In the asymmetric Hebbian window a presynaptic spike that precedes the postsynaptic one, Δt &gt; 0, strengthens the synapse, and the reverse order weakens it. Other preparations show reversed or symmetric windows, so the same pair of spikes can strengthen one synapse and weaken another. Repeating a pairing turns a single point on the curve into learning.</p></div>
+<section class="widget" aria-label="Interactive model"><div class="widget-in"><div class="panels" style="grid-template-columns:minmax(0,2.4fr) minmax(0,2fr) minmax(0,.9fr)"><div class="panel"><h2>Presynaptic and postsynaptic spikes</h2><div class="cv" data-aspect="0.62" data-maxh="480"><canvas id="tr" aria-label="Presynaptic and postsynaptic spikes"></canvas></div><div class="readout" id="ro-tr"></div></div><div class="panel"><h2>Learning window</h2><div class="cv" data-aspect="0.86" data-maxh="480"><canvas id="win" aria-label="Learning window"></canvas></div><div class="readout" id="ro-win"></div></div><div class="panel"><h2>Synapse</h2><div class="cv" data-aspect="1.6" data-maxh="480"><canvas id="syn" aria-label="Synapse"></canvas></div><div class="readout" id="ro-syn"></div></div></div><div class="controls" id="controls"></div></div></section>
+<dl class="fields"><div class="ask"><dt>Ask yourself</dt><dd>Under the asymmetric Hebbian window, what happens to a synapse whose presynaptic neuron fires at random times relative to the postsynaptic neuron, and why does the balance of the two lobes matter?</dd></div></dl>
+<details class="box"><summary>Equations</summary><div class="inner eq"><div>Δt = t<sub>post</sub> − t<sub>pre</sub></div>
+<div>asymmetric Hebbian: Δw = A<sub>+</sub> e<sup>−Δt/τ<sub>+</sub></sup> for Δt &gt; 0,&nbsp;&nbsp; Δw = −A<sub>−</sub> e<sup>Δt/τ<sub>−</sub></sup> for Δt &lt; 0</div>
+<div>asymmetric anti-Hebbian: the same window with the sign reversed</div>
+<div>symmetric depression: Δw = −A e<sup>−|Δt|/τ</sup></div>
+<div>symmetric with depressing flanks: Δw = A (1 − Δt²/τ²) e<sup>−Δt²/2τ²</sup></div>
+<div class="note">A<sub>+</sub> = 0.08, A<sub>−</sub> = 0.045, τ<sub>+</sub> = 17 ms, τ<sub>−</sub> = 34 ms; weights are kept between 0 and 1. The window shapes follow those reviewed by Abbott and Nelson (2000), to be checked against the review.</div></div></details>
+<details class="box"><summary>Pseudocode</summary><div class="inner"><pre class="pseudo">for each pairing of a presynaptic and a postsynaptic spike:
+    Δt ← t_post − t_pre
+    Δw ← W(Δt)          (W is the chosen learning window)
+    w ← clip(w + Δw, 0, 1)</pre><div class="flow"><svg viewBox="0 0 420 172" aria-hidden="true"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" style="fill:var(--ink)"/></marker></defs><rect x="30" y="14" width="200" height="30"/><text x="130" y="33" text-anchor="middle">Δt ← t_post − t_pre</text><path class="a" d="M130,44 L130,62" marker-end="url(#ah)"/><path class="d" d="M130,62 L230,82.0 L130,102 L30,82.0 Z"/><text x="130" y="86.0" text-anchor="middle">Δt &gt; 0 ?</text><path class="a" d="M230,82.0 L276,82.0" marker-end="url(#ah)"/><text class="s" x="238" y="77.0">yes</text><rect x="280" y="67.0" width="130" height="30"/><text x="345" y="86.0" text-anchor="middle">Δw ← W₊(Δt)</text><text class="s" x="136" y="114">no</text><path class="a" d="M130,102 L130,120" marker-end="url(#ah)"/><rect x="30" y="120" width="200" height="30"/><text x="130" y="139" text-anchor="middle">otherwise Δw ← W₋(Δt); w ← w + Δw</text><path class="a" d="M345,97.0 L345,135.0 L230,135.0" marker-end="url(#ah)"/><path class="a" d="M30,135.0 L12,135.0 L12,29.0 L26,29.0" marker-end="url(#ah)"/><text class="s" x="16" y="164">next step</text></svg></div></div></details>
+<footer class="foot"><div><h3>Originators</h3><ul><li><span class="g g-est" title="established">●</span>Markram et al. (1997); Bi and Poo (1998), timing-dependent plasticity</li><li><span class="g g-lik" title="likely">◐</span>Bell et al. (1997), anti-Hebbian window in the electrosensory lobe</li><li><span class="g g-lik" title="likely">◐</span>Abbott and Nelson (2000), Synaptic plasticity: taming the beast, Nature Neuroscience 3, 1178–1183; window categories to check</li></ul></div><div><h3>On the Atlas</h3><ul><li><span class="d">Plate I</span><a href="../index.html#long-term-plasticity">This node on the Atlas</a></li><li><span class="d">Acts on</span><a href="12-balanced-excitatory-inhibitory-network.html">Balanced Excitatory–Inhibitory Network</a></li><li><span class="d">Acts on</span><a href="14-excitatory-inhibitory-rate-model.html">Excitatory–Inhibitory Rate Model</a></li><li><span class="d">Acts on</span><a href="24-artificial-neural-networks.html">Artificial Neural Networks</a></li><li><span class="d">Acts on</span><a href="26-attractor-networks-and-associative-memory.html">Attractor Networks and Associative Memory</a></li><li><span class="d">Companion</span><a href="34-normalised-hebbian-learning-and-principal-components.html">Normalised Hebbian Learning and Principal Components</a></li></ul></div></footer>
+<nav class="seq"><a href="32-forward-models-of-neural-signals.html">← Plate XXXII · Forward Models of Neural Signals</a><a href="34-normalised-hebbian-learning-and-principal-components.html">Plate XXXIV · Normalised Hebbian Learning and Principal Components →</a></nav>
+</div>
+<script>/* Shared runtime for Atlas plates: colours, canvases, plots, controls, animation. */
+const P = (() => {
+  const root = document.documentElement;
+  const col = {};
+  function readCols() {
+    const cs = getComputedStyle(root);
+    col.paper = cs.getPropertyValue('--paper').trim();
+    col.ink = cs.getPropertyValue('--ink').trim();
+    col.soft = cs.getPropertyValue('--ink-soft').trim();
+    col.accent = cs.getPropertyValue('--accent').trim();
+    col.ochre = cs.getPropertyValue('--ochre').trim();
+    col.rule = cs.getPropertyValue('--rule').trim();
+  }
+  readCols();
+
+  /* canvases */
+  const cvs = {}, draws = [];
+  let pending = false;
+  function redrawAll() { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; readCols(); draws.forEach(f => { try { f(); } catch (e) { console.error(e); } }); }); }
+  function setup(el) {
+    const wrap = el.parentElement;
+    const asp = +wrap.dataset.aspect || 0.6, maxh = +wrap.dataset.maxh || 520;
+    const o = { el, ctx: el.getContext('2d'), w: 0, h: 0 };
+    o.fit = () => {
+      const w = Math.max(10, wrap.clientWidth), h = Math.min(maxh, Math.round(w * asp));
+      wrap.style.height = h + 'px';
+      const dpr = window.devicePixelRatio || 1;
+      el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+      o.w = w; o.h = h; o.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    o.fit();
+    let lw = wrap.clientWidth;
+    new ResizeObserver(() => { if (wrap.clientWidth !== lw) { lw = wrap.clientWidth; o.fit(); redrawAll(); } }).observe(wrap);
+    return o;
+  }
+  document.querySelectorAll('.panel canvas').forEach(el => cvs[el.id] = setup(el));
+  const cv = id => cvs[id];
+  const clear = c => { c.ctx.clearRect(0, 0, c.w, c.h); };
+  const onDraw = f => { draws.push(f); };
+
+  /* numbers */
+  function niceTicks(a, b, n = 5) {
+    const span = b - a; if (!(span > 0)) return [a];
+    const s0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(s0))), e = s0 / mag;
+    const st = (e >= 7.5 ? 10 : e >= 3.5 ? 5 : e >= 1.5 ? 2 : 1) * mag;
+    const t = []; for (let v = Math.ceil(a / st - 1e-9) * st; v <= b + st * 1e-9; v += st) t.push(+v.toFixed(10));
+    return t;
+  }
+  const fmt = v => { const a = Math.abs(v); if (a === 0) return '0'; if (a >= 1e4 || a < 1e-3) return v.toExponential(0).replace('e+', 'e'); return String(+v.toPrecision(4)); };
+
+  /* plot */
+  class Plot {
+    constructor(c, o) {
+      this.c = c; this.g = c.ctx;
+      const b = o.box || [0, 0, c.w, c.h];
+      const pad = Object.assign({ l: 48, r: 12, t: 10, b: 34 }, o.pad || {});
+      this.L = b[0] + pad.l; this.R = b[0] + b[2] - pad.r; this.T = b[1] + pad.t; this.B = b[1] + b[3] - pad.b;
+      this.x0 = o.x[0]; this.x1 = o.x[1]; this.y0 = o.y[0]; this.y1 = o.y[1];
+      this.xlog = !!o.xlog; this.ylog = !!o.ylog;
+    }
+    tx(v, a, b, log) { return log ? (Math.log10(v) - Math.log10(a)) / (Math.log10(b) - Math.log10(a)) : (v - a) / (b - a); }
+    X(v) { return this.L + this.tx(v, this.x0, this.x1, this.xlog) * (this.R - this.L); }
+    Y(v) { return this.B - this.tx(v, this.y0, this.y1, this.ylog) * (this.B - this.T); }
+    ix(px) { const t = (px - this.L) / (this.R - this.L); return this.xlog ? Math.pow(10, Math.log10(this.x0) + t * (Math.log10(this.x1) - Math.log10(this.x0))) : this.x0 + t * (this.x1 - this.x0); }
+    iy(py) { const t = (this.B - py) / (this.B - this.T); return this.ylog ? Math.pow(10, Math.log10(this.y0) + t * (Math.log10(this.y1) - Math.log10(this.y0))) : this.y0 + t * (this.y1 - this.y0); }
+    ticks(a, b, log, n) {
+      if (!log) return niceTicks(a, b, n);
+      const t = []; for (let k = Math.ceil(Math.log10(a) - 1e-9); k <= Math.floor(Math.log10(b) + 1e-9); k++) t.push(Math.pow(10, k));
+      return t;
+    }
+    axes(o = {}) {
+      const g = this.g;
+      g.save(); g.strokeStyle = col.ink; g.fillStyle = col.soft; g.lineWidth = 1;
+      g.font = '10.5px "Courier Prime", "Courier New", monospace';
+      if (o.grid !== false) {
+        g.strokeStyle = col.rule; g.lineWidth = .7;
+        (o.yt || this.ticks(this.y0, this.y1, this.ylog, o.ny || 4)).forEach(v => { const y = Math.round(this.Y(v)) + .5; g.beginPath(); g.moveTo(this.L, y); g.lineTo(this.R, y); g.stroke(); });
+        g.strokeStyle = col.ink; g.lineWidth = 1;
+      }
+      g.beginPath(); g.moveTo(this.L + .5, this.T); g.lineTo(this.L + .5, this.B + .5); g.lineTo(this.R, this.B + .5); g.stroke();
+      if (!o.noxt) {
+        g.textAlign = 'center'; g.textBaseline = 'top';
+        (o.xt || this.ticks(this.x0, this.x1, this.xlog, o.nx || 5)).forEach(v => { const x = this.X(v); if (x < this.L - 1 || x > this.R + 1) return; g.beginPath(); g.moveTo(x, this.B); g.lineTo(x, this.B + 4); g.stroke(); g.fillText((o.xf || fmt)(v), x, this.B + 6); });
+      }
+      if (!o.noyt) {
+        g.textAlign = 'right'; g.textBaseline = 'middle';
+        (o.yt || this.ticks(this.y0, this.y1, this.ylog, o.ny || 4)).forEach(v => { const y = this.Y(v); if (y < this.T - 1 || y > this.B + 1) return; g.beginPath(); g.moveTo(this.L - 4, y); g.lineTo(this.L, y); g.stroke(); g.fillText((o.yf || fmt)(v), this.L - 6, y); });
+      }
+      g.font = 'italic 13px Spectral, Georgia, serif'; g.fillStyle = col.ink;
+      if (o.xl) { g.textAlign = 'right'; g.textBaseline = 'bottom'; g.fillText(o.xl, this.R, this.B - 4); }
+      if (o.yl) { g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText(o.yl, this.L + 6, this.T); }
+      g.restore();
+    }
+    clip(f) { const g = this.g; g.save(); g.beginPath(); g.rect(this.L, this.T - 2, this.R - this.L, this.B - this.T + 4); g.clip(); f(); g.restore(); }
+    style(s) { const g = this.g; g.strokeStyle = s.color || col.ink; g.lineWidth = s.w || 1.4; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.setLineDash(s.dash || []); g.lineJoin = 'round'; g.lineCap = 'round'; }
+    line(xs, ys, s = {}) {
+      const g = this.g; this.clip(() => {
+        this.style(s); g.beginPath(); let on = false;
+        for (let i = 0; i < xs.length; i++) { const y = ys[i]; if (y == null || !isFinite(y)) { on = false; continue; } const px = this.X(xs[i]), py = this.Y(y); if (!on) { g.moveTo(px, py); on = true; } else g.lineTo(px, py); }
+        g.stroke();
+      });
+    }
+    fn(f, s = {}, n = 200) { const xs = [], ys = []; for (let i = 0; i <= n; i++) { const x = this.xlog ? Math.pow(10, Math.log10(this.x0) + i / n * (Math.log10(this.x1) - Math.log10(this.x0))) : this.x0 + i / n * (this.x1 - this.x0); xs.push(x); ys.push(f(x)); } this.line(xs, ys, s); }
+    steps(xs, ys, s = {}) { const X = [], Y = []; for (let i = 0; i < xs.length; i++) { if (i) { X.push(xs[i]); Y.push(ys[i - 1]); } X.push(xs[i]); Y.push(ys[i]); } this.line(X, Y, s); }
+    dots(xs, ys, s = {}) {
+      const g = this.g; this.clip(() => {
+        g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.fillStyle = s.color || col.ink; g.strokeStyle = s.color || col.ink; g.lineWidth = 1;
+        for (let i = 0; i < xs.length; i++) { if (!isFinite(ys[i])) continue; g.beginPath(); g.arc(this.X(xs[i]), this.Y(ys[i]), s.r || 2.5, 0, 7); s.hollow ? (g.fillStyle = col.paper, g.fill(), g.stroke()) : g.fill(); }
+        g.globalAlpha = 1;
+      });
+    }
+    vline(x, s = {}) { const g = this.g; this.style(s); g.beginPath(); g.moveTo(this.X(x), s.y0 != null ? this.Y(s.y0) : this.T); g.lineTo(this.X(x), s.y1 != null ? this.Y(s.y1) : this.B); g.stroke(); g.globalAlpha = 1; g.setLineDash([]); }
+    hline(y, s = {}) { const g = this.g; this.style(s); g.beginPath(); g.moveTo(this.L, this.Y(y)); g.lineTo(this.R, this.Y(y)); g.stroke(); g.globalAlpha = 1; g.setLineDash([]); }
+    band(a, b, s = {}) { const g = this.g; g.save(); g.globalAlpha = s.alpha || .15; g.fillStyle = s.color || col.ochre; g.fillRect(this.X(a), this.T, this.X(b) - this.X(a), this.B - this.T); g.restore(); }
+    text(t, x, y, s = {}) { label(this.g, t, this.X(x), this.Y(y), s); }
+  }
+  function label(g, t, x, y, s = {}) {
+    g.save(); g.fillStyle = s.color || col.ink; g.globalAlpha = s.alpha == null ? 1 : s.alpha;
+    g.font = s.font || (s.mono ? '10.5px "Courier Prime", "Courier New", monospace' : (s.italic === false ? '' : 'italic ') + (s.size || 13) + 'px Spectral, Georgia, serif');
+    g.textAlign = s.align || 'left'; g.textBaseline = s.base || 'middle'; g.fillText(t, x, y); g.restore();
+  }
+  const plot = (c, o) => new Plot(c, o);
+
+  /* drawing helpers in pixel space */
+  function circle(g, x, y, r, s = {}) { g.save(); g.beginPath(); g.arc(x, y, r, 0, 7); if (s.fill) { g.fillStyle = s.fill; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.fill(); g.globalAlpha = 1; } if (s.stroke !== false) { g.strokeStyle = s.stroke || col.ink; g.lineWidth = s.w || 1.2; g.setLineDash(s.dash || []); g.stroke(); } g.restore(); }
+  function seg(g, x1, y1, x2, y2, s = {}) { g.save(); g.strokeStyle = s.color || col.ink; g.lineWidth = s.w || 1.2; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.setLineDash(s.dash || []); g.lineCap = 'round'; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.restore(); }
+  function arrow(g, x1, y1, x2, y2, s = {}) { seg(g, x1, y1, x2, y2, s); const a = Math.atan2(y2 - y1, x2 - x1), h = s.head || 7; g.save(); g.strokeStyle = s.color || col.ink; g.lineWidth = s.w || 1.2; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.beginPath(); g.moveTo(x2 - h * Math.cos(a - .42), y2 - h * Math.sin(a - .42)); g.lineTo(x2, y2); g.lineTo(x2 - h * Math.cos(a + .42), y2 - h * Math.sin(a + .42)); g.stroke(); g.restore(); }
+  function mix(a, b, t) { /* mix two css colours by drawing; returns rgba string of a with alpha t */ return { a, b, t }; }
+  function shade(c, t) { /* colour c (hex or rgb) at alpha t */ const h = c.replace('#', ''); if (h.length >= 6) { const r = parseInt(h.slice(0, 2), 16), gg = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); return `rgba(${r},${gg},${b},${Math.max(0, Math.min(1, t)).toFixed(3)})`; } return c; }
+
+  /* controls */
+  const box = document.getElementById('controls');
+  function ctl(label) { const d = document.createElement('div'); d.className = 'ctl'; const l = document.createElement('div'); l.className = 'lab'; const a = document.createElement('span'); a.textContent = label; const v = document.createElement('span'); v.className = 'val'; l.append(a, v); d.append(l); box.append(d); return { d, v }; }
+  let nid = 0;
+  function slider(o) {
+    const { d, v } = ctl(o.label); const inp = document.createElement('input'); inp.type = 'range'; inp.id = 'c' + (++nid);
+    inp.setAttribute('aria-label', o.label);
+    const lg = !!o.log; inp.min = lg ? Math.log10(o.min) : o.min; inp.max = lg ? Math.log10(o.max) : o.max; inp.step = o.step || (lg ? .01 : (o.max - o.min) / 200); inp.value = lg ? Math.log10(o.value) : o.value;
+    d.append(inp);
+    let val = o.value; const show = () => { v.textContent = (o.fmt || fmt)(val); }; show();
+    inp.addEventListener('input', () => { val = lg ? Math.pow(10, +inp.value) : +inp.value; if (o.round) val = Math.round(val); show(); o.on && o.on(val); });
+    return { get: () => val, set: x => { val = x; inp.value = lg ? Math.log10(x) : x; show(); } };
+  }
+  function choice(o) {
+    const { d, v } = ctl(o.label); v.remove(); const s = document.createElement('div'); s.className = 'seg'; s.setAttribute('role', 'group'); s.setAttribute('aria-label', o.label);
+    let val = o.value; const bs = o.options.map(([k, l]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = l; b.setAttribute('aria-pressed', k === val); b.addEventListener('click', () => { val = k; bs.forEach((x, i) => x.setAttribute('aria-pressed', o.options[i][0] === val)); o.on && o.on(val); }); s.append(b); return b; });
+    d.append(s); return { get: () => val };
+  }
+  function button(label, on) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = label; b.addEventListener('click', on); box.append(b); return b; }
+
+  /* animation */
+  function loop(step) { let last = null; function f(t) { if (!document.hidden && last != null) step(Math.min(0.05, (t - last) / 1000)); last = t; requestAnimationFrame(f); } requestAnimationFrame(f); }
+
+  /* randomness */
+  function rng(seed) { let s = seed >>> 0 || 1; return () => { s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function gauss(r) { let u = 0; while (u === 0) u = r(); const v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+
+  /* pointer dragging on a canvas */
+  function drag(c, h) {
+    const el = c.el; let on = false;
+    const pt = e => { const r = el.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    el.addEventListener('pointerdown', e => { on = true; try { el.setPointerCapture(e.pointerId); } catch (x) {} h.down && h.down(pt(e)); e.preventDefault(); });
+    el.addEventListener('pointermove', e => { const p = pt(e); if (on) h.move && h.move(p); else h.hover && h.hover(p); });
+    const up = e => { if (on) { on = false; h.up && h.up(pt(e)); } };
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  }
+  function readout(id, html) { const el = document.getElementById('ro-' + id); if (el) el.innerHTML = html; }
+
+  /* print toggle */
+  const bp = document.getElementById('p-plate'), bc = document.getElementById('p-cyan');
+  function setPrint(p, save) {
+    if (p === 'cyan') root.setAttribute('data-print', 'cyan'); else root.removeAttribute('data-print');
+    bp.setAttribute('aria-pressed', p !== 'cyan'); bc.setAttribute('aria-pressed', p === 'cyan');
+    if (save) try { localStorage.setItem('atlas-print', p); } catch (e) {}
+    redrawAll();
+  }
+  bp.addEventListener('click', () => setPrint('plate', true));
+  bc.addEventListener('click', () => setPrint('cyan', true));
+  try { setPrint(localStorage.getItem('atlas-print') === 'cyan' ? 'cyan' : 'plate'); } catch (e) { setPrint('plate'); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(redrawAll);
+
+  return { col, cv, clear, onDraw, redraw: redrawAll, plot, label, circle, seg, arrow, shade, slider, choice, button, loop, rng, gauss, drag, readout, niceTicks, fmt };
+})();
+</script>
+<script>(function () {
+const WINS = {
+  hebb: { name: 'Asymmetric Hebbian', f: d => d > 0 ? .08 * Math.exp(-d / 17) : d < 0 ? -.045 * Math.exp(d / 34) : 0 },
+  anti: { name: 'Asymmetric anti-Hebbian', f: d => d > 0 ? -.08 * Math.exp(-d / 17) : d < 0 ? .045 * Math.exp(d / 34) : 0 },
+  symd: { name: 'Symmetric depression', f: d => -.06 * Math.exp(-Math.abs(d) / 20) },
+  mexh: { name: 'Symmetric, depressing flanks', f: d => { const q = (d / 18) * (d / 18); return .08 * (1 - q) * Math.exp(-q / 2); } },
+};
+let win = 'hebb', tpre = 40, tpost = 55, w = .5, n = 0, dragging = null;
+const T = 100, dw = () => WINS[win].f(tpost - tpre);
+function plotTr() { const c = P.cv('tr'); return { c, pre: P.plot(c, { box: [0, 0, c.w, c.h * .5], x: [0, T], y: [-1, 1.4], pad: { l: 90, b: 6 } }), post: P.plot(c, { box: [0, c.h * .5, c.w, c.h * .5], x: [0, T], y: [-1, 1.4], pad: { l: 90, t: 6, b: 32 } }) }; }
+function spike(g, p, t, color, hot) { const x = p.X(t); P.seg(g, x, p.Y(-.2), x, p.Y(1.2), { color, w: hot ? 3.4 : 2.4 }); g.save(); g.fillStyle = color; g.beginPath(); g.moveTo(x, p.Y(1.2) - 4); g.lineTo(x - 6, p.Y(1.2) - 12); g.lineTo(x + 6, p.Y(1.2) - 12); g.closePath(); g.fill(); g.restore(); }
+function draw() {
+  const col = P.col, { c, pre, post } = plotTr(), g = c.ctx; P.clear(c);
+  [pre, post].forEach((p, k) => { P.seg(g, p.L, p.Y(0), p.R, p.Y(0), { color: col.soft, w: 1 }); });
+  post.axes({ xl: 'time (ms)', noyt: true, grid: false });
+  P.label(g, 'presynaptic', 8, pre.Y(.4), { size: 14 }); P.label(g, 'postsynaptic', 8, post.Y(.4), { size: 14 });
+  spike(g, pre, tpre, col.ink, dragging === 'pre'); spike(g, post, tpost, col.ink, dragging === 'post');
+  const d = tpost - tpre, xa = pre.X(tpre), xb = post.X(tpost), ym = (pre.B + post.T) / 2;
+  P.seg(g, xa, pre.Y(-.2), xa, ym, { color: col.accent, dash: [2, 3] }); P.seg(g, xb, post.Y(1.2) - 14, xb, ym, { color: col.accent, dash: [2, 3] });
+  P.arrow(g, xa, ym, xb, ym, { color: col.accent, w: 1.6 });
+  P.label(g, `Δt = t_post − t_pre = ${d >= 0 ? '+' : ''}${d.toFixed(0)} ms`, (xa + xb) / 2, ym - 11, { mono: true, align: 'center', color: col.accent });
+  P.readout('tr', 'drag either spike along its trace');
+  const c2 = P.cv('win'); P.clear(c2);
+  const q = P.plot(c2, { x: [-80, 80], y: [-.1, .1], pad: { l: 50 } });
+  q.axes({ xl: 'Δt (ms)', yl: 'Δw', yf: v => (v > 0 ? '+' : '') + v.toFixed(2) });
+  q.hline(0, { color: col.soft, w: .8 }); q.vline(0, { color: col.soft, w: .8 });
+  q.fn(WINS[win].f, { color: col.ink, w: 2 }, 400);
+  q.vline(Math.max(-80, Math.min(80, d)), { color: col.accent, w: 1, dash: [3, 3], y0: 0, y1: dw() });
+  q.dots([Math.max(-80, Math.min(80, d))], [dw()], { r: 6, color: col.accent });
+  q.text(WINS[win].name, -78, -.088, { color: col.ink });
+  P.readout('win', `Δw for this pair: ${dw() >= 0 ? '+' : ''}${dw().toFixed(3)}`);
+  const c3 = P.cv('syn'), g3 = c3.ctx; P.clear(c3);
+  const cx = c3.w / 2, y1 = c3.h * .16, y2 = c3.h * .78, th = 1 + 14 * w;
+  P.circle(g3, cx, y1, 13, { fill: col.paper }); P.label(g3, 'pre', cx, y1 - 22, { mono: true, align: 'center', color: col.soft });
+  P.seg(g3, cx, y1 + 13, cx, y2 - 26, { w: 1.6 });
+  g3.save(); g3.fillStyle = col.accent; g3.beginPath(); g3.ellipse(cx, y2 - 26, th * .9 + 3, th * .5 + 3, 0, 0, 7); g3.fill(); g3.restore();
+  P.seg(g3, cx - th - 6, y2 - 16, cx + th + 6, y2 - 16, { w: 2 });
+  P.circle(g3, cx, y2 + 6, 16, { fill: col.paper }); P.label(g3, 'post', cx, y2 + 34, { mono: true, align: 'center', color: col.soft });
+  P.readout('syn', `w = ${w.toFixed(2)} · ${n} pairing${n === 1 ? '' : 's'}`);
+}
+const tr = P.cv('tr');
+P.drag(tr, {
+  down: pt => { const { pre, post } = plotTr(); const dpre = Math.abs(pt.x - pre.X(tpre)) + (pt.y > pre.B + 3 ? 1e3 : 0), dpost = Math.abs(pt.x - post.X(tpost)) + (pt.y < post.T - 3 ? 1e3 : 0); dragging = dpre < dpost ? 'pre' : 'post'; move(pt); },
+  move: pt => move(pt), up: () => { dragging = null; draw(); } });
+function move(pt) { const { pre } = plotTr(); const t = Math.max(2, Math.min(T - 2, pre.ix(pt.x))); if (dragging === 'pre') tpre = t; else if (dragging === 'post') tpost = t; draw(); }
+P.choice({ label: 'Learning window', options: Object.keys(WINS).map(k => [k, WINS[k].name]), value: win, on: v => { win = v; w = .5; n = 0; draw(); } });
+P.button('Repeat this pairing', () => { w = Math.max(0, Math.min(1, w + dw())); n++; draw(); });
+P.onDraw(draw); draw();
+
+})();</script>
+</body></html>

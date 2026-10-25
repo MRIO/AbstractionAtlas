@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mean-Field Approximation: From Spiking Networks to Rate Models</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Spectral+SC:wght@500&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap">
+<style>:root {
+  --paper: #e4e6e3;
+  --ink: #191d24;
+  --ink-soft: #565d68;
+  --accent: #1d3b63;
+  --ochre: #94661c;
+  --rule: #191d2433;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .12 0 0 0 0 .16 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --f-display: "Spectral SC", "Cormorant SC", Georgia, serif;
+  --f-text: "Spectral", Georgia, "Times New Roman", serif;
+  --f-mono: "Courier Prime", "Courier New", ui-monospace, monospace;
+  color-scheme: light;
+}
+:root[data-print="cyan"] {
+  --paper: #c7dbec;
+  --ink: #0a2350;
+  --ink-soft: #2f4f7e;
+  --accent: #a2352a;
+  --ochre: #7f5512;
+  --rule: #0a235038;
+  --grain:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .04 0 0 0 0 .14 0 0 0 0 .34 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.00625' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .05 0 0 0 0 .2 0 0 0 0 .48 0 0 0 .8 -.33'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  background-color: var(--paper); background-image: var(--grain);
+  color: var(--ink);
+  font-family: var(--f-text); font-size: 16.5px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 48px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 22px; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.top { display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: space-between; align-items: center; font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; color: var(--ink-soft); border-bottom: 1px solid var(--ink); padding-bottom: 10px; }
+.top a { color: var(--ink); text-decoration: none; text-transform: uppercase; }
+.top a:hover { color: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--ink); }
+.seg button { font-family: var(--f-mono); font-size: 12px; background: transparent; color: var(--ink); border: 0; padding: 4px 11px; cursor: pointer; letter-spacing: .04em; }
+.seg button + button { border-left: 1px solid var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+.strip { display: block; max-width: 460px; }
+.strip svg { width: 100%; height: auto; display: block; overflow: visible; }
+.strip .sd { fill: var(--ink); }
+.strip .bd { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
+.strip .md { fill: var(--paper); stroke: var(--ochre); stroke-width: 1; stroke-dasharray: 1.5 1.5; }
+.strip .sl { stroke: var(--ink); stroke-width: 1.2; }
+.strip .bl { stroke: var(--ink); stroke-width: .7; fill: none; opacity: .6; }
+.strip .hl { stroke: var(--accent); stroke-width: 3.2; fill: none; }
+.strip .hr { fill: none; stroke: var(--accent); stroke-width: 1.4; }
+.strip text { font-family: var(--f-mono); font-size: 7.5px; fill: var(--ink-soft); letter-spacing: .05em; }
+
+.head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 300px); gap: 18px 36px; align-items: end; }
+.kicker { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+h1 { font-family: var(--f-display); font-weight: 500; font-size: clamp(30px, 4.4vw, 48px); line-height: 1.04; letter-spacing: .01em; margin: 6px 0 4px; text-wrap: balance; }
+.sub { font-family: var(--f-mono); font-size: 12.5px; color: var(--ink-soft); }
+.glyphbox { margin: 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 6px 0; display: flex; align-items: center; gap: 6px; }
+.glyphbox .to { font-family: var(--f-mono); color: var(--ink-soft); }
+.glyphbox.pair .glyph { max-width: 46%; }
+
+.prose { max-width: 70ch; display: grid; gap: 10px; }
+.prose p { margin: 0; }
+.prose a.term { color: inherit; text-decoration: underline dotted var(--accent); text-underline-offset: 3px; }
+
+.widget { border: 1px solid var(--ink); padding: 5px; position: relative; }
+.widget::before { content: ""; position: absolute; inset: 3px; border: 1px solid var(--rule); pointer-events: none; }
+.widget-in { padding: 14px 16px 16px; display: grid; gap: 14px; }
+.panels { display: grid; gap: 16px 22px; align-items: start; }
+.panel { min-width: 0; display: grid; gap: 4px; }
+.panel h2 { margin: 0; font-family: var(--f-mono); font-weight: 400; font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.panel .cv { position: relative; width: 100%; }
+.panel canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.readout { font-family: var(--f-mono); font-size: 12px; color: var(--ink-soft); min-height: 1.4em; font-variant-numeric: tabular-nums; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: end; border-top: 1px solid var(--rule); padding-top: 12px; }
+.ctl { display: grid; gap: 3px; font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-soft); letter-spacing: .04em; min-width: 180px; }
+.ctl .lab { display: flex; justify-content: space-between; gap: 12px; }
+.ctl .val { color: var(--ink); font-variant-numeric: tabular-nums; }
+.ctl input[type=range] { width: 100%; accent-color: var(--accent); }
+.controls > * { max-width: 100%; }
+.ctl .seg { flex-wrap: wrap; }
+.ctl .seg button { border-bottom: 1px solid var(--ink); margin-bottom: -1px; }
+.btn { font-family: var(--f-mono); font-size: 12px; letter-spacing: .04em; background: transparent; color: var(--ink); border: 1px solid var(--ink); padding: 6px 14px; cursor: pointer; }
+.btn:hover { background: var(--ink); color: var(--paper); }
+.hint { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-soft); }
+
+.fields { display: grid; gap: 0; margin: 0; max-width: 82ch; border-top: 1px solid var(--ink); }
+.fields div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px; border-bottom: 1px solid var(--rule); padding: 9px 0; }
+.fields dt { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); padding-top: 3px; }
+.fields dd { margin: 0; }
+.fields .ask dd { font-style: italic; }
+
+details.box { border-top: 1px solid var(--ink); max-width: 82ch; }
+details.box + details.box { border-top: 1px solid var(--rule); }
+details.box summary { cursor: pointer; list-style: none; padding: 10px 0; font-family: var(--f-mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; display: flex; justify-content: space-between; }
+details.box summary::-webkit-details-marker { display: none; }
+details.box summary::after { content: "+"; font-size: 15px; line-height: 1; }
+details.box[open] summary::after { content: "−"; }
+details.box .inner { padding: 2px 0 16px; display: grid; gap: 10px; }
+.eq { font-family: var(--f-text); font-size: 17px; line-height: 1.7; overflow-x: auto; }
+.eq div { white-space: nowrap; }
+.eq .note { white-space: normal; font-size: 14.5px; color: var(--ink-soft); }
+.eq i { font-style: italic; }
+pre.pseudo { font-family: var(--f-mono); font-size: 13px; line-height: 1.6; margin: 0; white-space: pre-wrap; overflow-x: auto; }
+.flow { max-width: 420px; }
+.flow svg { width: 100%; height: auto; display: block; }
+.flow rect, .flow path.d { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
+.flow path.a { fill: none; stroke: var(--ink); stroke-width: 1; }
+.flow text { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink); }
+.flow text.s { fill: var(--ink-soft); font-size: 9.5px; }
+
+footer.foot { border-top: 3px double var(--ink); padding-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 36px; font-size: 15px; }
+footer h3 { margin: 0 0 6px; font-family: var(--f-mono); font-weight: 400; font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+footer li .d { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-right: 6px; }
+.g { font-size: 13px; margin-right: 6px; }
+.g-est { color: var(--ink); } .g-lik { color: var(--accent); } .g-unv { color: var(--ochre); }
+.seq { display: flex; justify-content: space-between; gap: 16px; font-family: var(--f-mono); font-size: 12px; letter-spacing: .04em; border-top: 1px solid var(--rule); padding-top: 10px; }
+.seq a { text-decoration: none; }
+
+.glyph { width: 100%; max-width: 300px; height: auto; display: block; color: var(--ink); fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.glyph text { fill: var(--ink-soft); stroke: none; font-family: var(--f-mono); font-size: 9px; }
+.glyph .f { fill: currentColor; } .glyph .p { fill: var(--paper); } .glyph .a { stroke: var(--accent); } .glyph .af { fill: var(--accent); stroke: none; }
+.glyph .o { stroke: var(--ochre); } .glyph .of { fill: var(--ochre); stroke: none; } .glyph .ow { fill: var(--ochre); stroke: none; opacity: .18; }
+.glyph .d { stroke-dasharray: 3 3; } .glyph .t { stroke-width: .8; opacity: .55; } .glyph .n { stroke: none; }
+
+@media (max-width: 760px) {
+  .head { grid-template-columns: minmax(0, 1fr); }
+  .glyphbox { max-width: 320px; }
+  .panels { grid-template-columns: minmax(0, 1fr) !important; }
+  .fields div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+}
+</style></head><body>
+<div class="wrap">
+<div class="top"><a href="../index.html#population-averaging">← The Abstraction Atlas</a><span>Plate XIII</span><div class="seg" role="group" aria-label="Print"><button type="button" id="p-plate" aria-pressed="true">Plate</button><button type="button" id="p-cyan" aria-pressed="false">Cyanotype</button></div></div>
+<a class="strip" href="../index.html#population-averaging"><svg viewBox="0 -4 440 74" role="img" aria-label="Position on the Atlas"><line class="sl" x1="20" y1="16" x2="60" y2="16"/><line class="sl" x1="60" y1="16" x2="100" y2="16"/><line class="sl" x1="100" y1="16" x2="140" y2="16"/><line class="sl" x1="140" y1="16" x2="180" y2="16"/><line class="sl" x1="180" y1="16" x2="220" y2="16"/><line class="sl" x1="220" y1="16" x2="260" y2="16"/><line class="sl" x1="260" y1="16" x2="300" y2="16"/><line class="sl" x1="300" y1="16" x2="340" y2="16"/><line class="sl" x1="340" y1="16" x2="380" y2="16"/><line class="sl" x1="380" y1="16" x2="420" y2="16"/><path class="bl" d="M260,16 L270,40"/><path class="bl" d="M220,16 L214,40"/><path class="bl" d="M340,16 L340,40"/><path class="bl" d="M420,16 L408,40"/><path class="bl" d="M420,16 L432,40"/><path class="hl" d="M220,16 L260,16"/><circle class="sd" cx="20" cy="16" r="3.2"/><circle class="sd" cx="60" cy="16" r="3.2"/><circle class="sd" cx="100" cy="16" r="3.2"/><circle class="sd" cx="140" cy="16" r="3.2"/><circle class="sd" cx="180" cy="16" r="3.2"/><circle class="sd" cx="220" cy="16" r="3.2"/><circle class="sd" cx="260" cy="16" r="3.2"/><circle class="sd" cx="300" cy="16" r="3.2"/><circle class="sd" cx="340" cy="16" r="3.2"/><circle class="sd" cx="380" cy="16" r="3.2"/><circle class="sd" cx="420" cy="16" r="3.2"/><circle class="bd" cx="270" cy="40" r="2.8"/><circle class="bd" cx="214" cy="40" r="2.8"/><circle class="bd" cx="340" cy="40" r="2.8"/><circle class="bd" cx="408" cy="40" r="2.8"/><circle class="bd" cx="432" cy="40" r="2.8"/><circle class="md" cx="40" cy="62" r="2.8"/><circle class="md" cx="114" cy="62" r="2.8"/><circle class="md" cx="188" cy="62" r="2.8"/><circle class="md" cx="262" cy="62" r="2.8"/><circle class="md" cx="336" cy="62" r="2.8"/><circle class="md" cx="410" cy="62" r="2.8"/><text x="0" y="5">DETAIL</text><text x="440" y="5" text-anchor="end">PARSIMONY</text><text x="0" y="52">MODULATORS</text></svg></a>
+<header class="head"><div><div class="kicker">Edge plate · Simplification</div><h1>Mean-Field Approximation: From Spiking Networks to Rate Models</h1><div class="sub">Spiking Network → Rate Population Model</div></div><figure class="glyphbox pair"><svg class="glyph" viewBox="0 0 220 110" aria-hidden="true"><path class="t" d="M37.7,28.0 L75.3,18.3 M70.7,22.1 L75.3,18.3 L69.4,17.1"/><path class="t" d="M91.8,17.7 L129.2,26.0 M123.4,27.4 L129.2,26.0 L124.5,22.3"/><path class="t" d="M145.9,26.5 L181.2,19.7 M176.3,23.3 L181.2,19.7 L175.4,18.2"/><path class="t" d="M33.6,37.2 L52.0,74.0 M47.2,70.3 L52.0,74.0 L51.9,68.0"/><path class="t" d="M63.0,78.2 L92.1,62.3 M88.6,67.2 L92.1,62.3 L86.1,62.6"/><path class="" d="M106.3,53.0 L130.9,33.6"/><circle class="f n" cx="130.9" cy="33.6" r="2.6"/><path class="" d="M92.6,55.0 L38.4,33.3"/><circle class="f n" cx="38.4" cy="33.3" r="2.6"/><path class="" d="M106.8,62.2 L138.3,81.3"/><circle class="f n" cx="138.3" cy="81.3" r="2.6"/><path class="t" d="M153.7,83.8 L187.3,74.4 M182.8,78.4 L187.3,74.4 L181.4,73.4"/><path class="t" d="M195.1,64.0 L191.0,26.9 M194.2,32.0 L191.0,26.9 L189.0,32.6"/><path class="" d="M174.3,54.9 L188.9,66.4"/><circle class="f n" cx="188.9" cy="66.4" r="2.6"/><path class="" d="M161.5,45.3 L145.3,33.3"/><circle class="f n" cx="145.3" cy="33.3" r="2.6"/><path class="t" d="M185.5,24.6 L173.1,42.6 M174.0,36.7 L173.1,42.6 L178.3,39.6"/><path class="t" d="M150.2,79.2 L163.3,57.7 M162.7,63.7 L163.3,57.7 L158.3,60.9"/><path class="t" d="M86.8,23.5 L96.8,49.6 M92.4,45.5 L96.8,49.6 L97.3,43.6"/><path class="t" d="M64.0,82.4 L137.0,85.6 M131.5,88.0 L137.0,85.6 L131.7,82.8"/><path class="p" d="M30.0,24.0 L36.1,34.5 L23.9,34.5 Z"/><path class="p" d="M84.0,10.0 L90.1,20.5 L77.9,20.5 Z"/><path class="p" d="M138.0,22.0 L144.1,32.5 L131.9,32.5 Z"/><path class="p" d="M190.0,12.0 L196.1,22.5 L183.9,22.5 Z"/><path class="p" d="M56.0,76.0 L62.1,86.5 L49.9,86.5 Z"/><path class="p" d="M146.0,80.0 L152.1,90.5 L139.9,90.5 Z"/><path class="p" d="M196.0,66.0 L202.1,76.5 L189.9,76.5 Z"/><circle class="f" cx="100.0" cy="58.0" r="6"/><circle class="f" cx="168.0" cy="50.0" r="6"/></svg><span class="to">→</span><svg class="glyph" viewBox="0 0 220 110" aria-hidden="true"><circle class="" cx="110.0" cy="56.0" r="30"/><path class="a" d="M88.0,71.8 L89.0,71.7 L90.0,71.6 L91.0,71.5 L92.0,71.4 L93.0,71.3 L94.0,71.1 L95.0,70.9 L96.0,70.6 L97.0,70.3 L98.0,69.9 L99.0,69.4 L100.0,68.9 L101.0,68.2 L102.0,67.4 L103.0,66.4 L104.0,65.3 L105.0,64.1 L106.0,62.7 L107.0,61.1 L108.0,59.5 L109.0,57.8 L110.0,56.0 L111.0,54.2 L112.0,52.5 L113.0,50.9 L114.0,49.3 L115.0,47.9 L116.0,46.7 L117.0,45.6 L118.0,44.6 L119.0,43.8 L120.0,43.1 L121.0,42.6 L122.0,42.1 L123.0,41.7 L124.0,41.4 L125.0,41.1 L126.0,40.9 L127.0,40.7 L128.0,40.6 L129.0,40.5 L130.0,40.4 L131.0,40.3 L132.0,40.2"/><path class="" d="M20.0,28.0 L80.0,46.0 M74.1,46.9 L80.0,46.0 L75.6,41.9"/><path class="" d="M20.0,56.0 L79.0,56.0 M73.6,58.6 L79.0,56.0 L73.6,53.4"/><path class="" d="M20.0,84.0 L80.0,66.0 M75.6,70.1 L80.0,66.0 L74.1,65.1"/><path class="" d="M140.0,56.0 L206.0,56.0 M200.6,58.6 L206.0,56.0 L200.6,53.4"/><path d="M97,29 C88,2 132,2 123,29"/><path class="" d="M117.0,24.0 L123.0,29.0 L126.0,22.0"/><text x="206" y="50" text-anchor="end">r(t)</text></svg></figure></header>
+<div class="prose"><p>A mean-field approximation replaces a population of spiking neurons with a single variable, its firing rate. The bridge between the two levels is the transfer function F, the rate at which a neuron fires for a given mean input and noise. If every neuron sees the population only through averages, the rate model needs F and nothing else.</p><p>The left panel overlays the binned rate of a spiking network, with excitatory and inhibitory populations coupled through their average activity, and the prediction of the two-population rate model, both driven by the same step in external input. Change the size of the network, the step and the noise each neuron receives; the right panel plots F with dots from the spiking simulation.</p><p>For a large network with enough noise the rate model follows the population closely, and the dots fall on the curve. A small network makes the population rate ragged, and without noise the identical neurons fire in lockstep, so the averaging that the rate model relies on no longer holds.</p></div>
+<section class="widget" aria-label="Interactive model"><div class="widget-in"><div class="panels" style="grid-template-columns:minmax(0,3fr) minmax(0,2fr)"><div class="panel"><h2>Population rate: spiking network and rate model</h2><div class="cv" data-aspect="0.62" data-maxh="480"><canvas id="ov" aria-label="Population rate: spiking network and rate model"></canvas></div><div class="readout" id="ro-ov"></div></div><div class="panel"><h2>Transfer function</h2><div class="cv" data-aspect="0.9" data-maxh="480"><canvas id="tf" aria-label="Transfer function"></canvas></div><div class="readout" id="ro-tf"></div></div></div><div class="controls" id="controls"></div></div></section>
+<dl class="fields"><div class=""><dt>Keeps</dt><dd>Slow, population-wide dynamics: fixed points, oscillations and bifurcations.</dd></div><div class=""><dt>Loses</dt><dd>Spike timing, synchrony between cells and the noise of finite populations.</dd></div><div class=""><dt>Trust it when</dt><dd>Populations are large and their firing is asynchronous.</dd></div><div class="ask"><dt>Ask yourself</dt><dd>Which result of the mean-field model would you expect to break in a network of only 50 neurons, and why?</dd></div></dl>
+<details class="box"><summary>Equations</summary><div class="inner eq"><div>spiking: τ dV<sub>j</sub>/dt = −V<sub>j</sub> + μ(t) + σ √τ ξ<sub>j</sub>(t),&nbsp;&nbsp; spike and reset at θ</div>
+<div>μ<sub>E</sub> = μ<sub>ext</sub> + J<sub>EE</sub> s<sub>E</sub> − J<sub>IE</sub> s<sub>I</sub>,&nbsp;&nbsp; μ<sub>I</sub> = μ<sub>ext</sub> + J<sub>EI</sub> s<sub>E</sub> − J<sub>II</sub> s<sub>I</sub></div>
+<div>rate model: τ<sub>s</sub> ds<sub>E</sub>/dt = −s<sub>E</sub> + F(μ<sub>E</sub>, σ),&nbsp;&nbsp; τ<sub>s</sub> ds<sub>I</sub>/dt = −s<sub>I</sub> + F(μ<sub>I</sub>, σ)</div>
+<div>F(μ, σ) = [τ<sub>ref</sub> + τ √π ∫<sub>(V<sub>r</sub>−μ)/σ</sub><sup>(θ−μ)/σ</sup> e<sup>u²</sup>(1 + erf u) du]<sup>−1</sup></div>
+<div class="note">In the spiking network s<sub>E</sub> and s<sub>I</sub> are the population spike counts per neuron and per second, smoothed with τ<sub>s</sub>. θ = 20 mV, V<sub>r</sub> = 10 mV, τ = 20 ms, τ<sub>ref</sub> = 2 ms, τ<sub>s</sub> = 10 ms.</div></div></details>
+<details class="box"><summary>Pseudocode</summary><div class="inner"><pre class="pseudo">spiking level, for each time step dt:
+    every neuron integrates μ_ext + J·(smoothed population activity) + its own noise
+    population activity ← (spikes in this step / N) / dt, smoothed with τ_s
+rate level, for each time step dt:
+    s_E ← s_E + dt/τ_s · (−s_E + F(μ_E, σ));  likewise for s_I
+compare the binned spiking rate with s_E</pre></div></details>
+<footer class="foot"><div><h3>Originators</h3><ul><li><span class="g g-lik" title="likely">◐</span>Wilson and Cowan (1972)</li><li><span class="g g-lik" title="likely">◐</span>Amit and Brunel (1997), derivation from spiking networks</li><li><span class="g g-lik" title="likely">◐</span>Siegert (1951), first-passage rate of a noisy integrator</li></ul></div><div><h3>On the Atlas</h3><ul><li><span class="d">Plate I</span><a href="../index.html#population-averaging">This edge on the Atlas</a></li><li><span class="d">From</span><a href="12-balanced-excitatory-inhibitory-network.html">Balanced Excitatory–Inhibitory Network</a></li><li><span class="d">To</span><a href="14-excitatory-inhibitory-rate-model.html">Excitatory–Inhibitory Rate Model</a></li></ul></div></footer>
+<nav class="seq"><a href="12-balanced-excitatory-inhibitory-network.html">← Plate XII · Balanced Excitatory–Inhibitory Network</a><a href="14-excitatory-inhibitory-rate-model.html">Plate XIV · Excitatory–Inhibitory Rate Model →</a></nav>
+</div>
+<script>/* Shared runtime for Atlas plates: colours, canvases, plots, controls, animation. */
+const P = (() => {
+  const root = document.documentElement;
+  const col = {};
+  function readCols() {
+    const cs = getComputedStyle(root);
+    col.paper = cs.getPropertyValue('--paper').trim();
+    col.ink = cs.getPropertyValue('--ink').trim();
+    col.soft = cs.getPropertyValue('--ink-soft').trim();
+    col.accent = cs.getPropertyValue('--accent').trim();
+    col.ochre = cs.getPropertyValue('--ochre').trim();
+    col.rule = cs.getPropertyValue('--rule').trim();
+  }
+  readCols();
+
+  /* canvases */
+  const cvs = {}, draws = [];
+  let pending = false;
+  function redrawAll() { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; readCols(); draws.forEach(f => { try { f(); } catch (e) { console.error(e); } }); }); }
+  function setup(el) {
+    const wrap = el.parentElement;
+    const asp = +wrap.dataset.aspect || 0.6, maxh = +wrap.dataset.maxh || 520;
+    const o = { el, ctx: el.getContext('2d'), w: 0, h: 0 };
+    o.fit = () => {
+      const w = Math.max(10, wrap.clientWidth), h = Math.min(maxh, Math.round(w * asp));
+      wrap.style.height = h + 'px';
+      const dpr = window.devicePixelRatio || 1;
+      el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+      o.w = w; o.h = h; o.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    o.fit();
+    let lw = wrap.clientWidth;
+    new ResizeObserver(() => { if (wrap.clientWidth !== lw) { lw = wrap.clientWidth; o.fit(); redrawAll(); } }).observe(wrap);
+    return o;
+  }
+  document.querySelectorAll('.panel canvas').forEach(el => cvs[el.id] = setup(el));
+  const cv = id => cvs[id];
+  const clear = c => { c.ctx.clearRect(0, 0, c.w, c.h); };
+  const onDraw = f => { draws.push(f); };
+
+  /* numbers */
+  function niceTicks(a, b, n = 5) {
+    const span = b - a; if (!(span > 0)) return [a];
+    const s0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(s0))), e = s0 / mag;
+    const st = (e >= 7.5 ? 10 : e >= 3.5 ? 5 : e >= 1.5 ? 2 : 1) * mag;
+    const t = []; for (let v = Math.ceil(a / st - 1e-9) * st; v <= b + st * 1e-9; v += st) t.push(+v.toFixed(10));
+    return t;
+  }
+  const fmt = v => { const a = Math.abs(v); if (a === 0) return '0'; if (a >= 1e4 || a < 1e-3) return v.toExponential(0).replace('e+', 'e'); return String(+v.toPrecision(4)); };
+
+  /* plot */
+  class Plot {
+    constructor(c, o) {
+      this.c = c; this.g = c.ctx;
+      const b = o.box || [0, 0, c.w, c.h];
+      const pad = Object.assign({ l: 48, r: 12, t: 10, b: 34 }, o.pad || {});
+      this.L = b[0] + pad.l; this.R = b[0] + b[2] - pad.r; this.T = b[1] + pad.t; this.B = b[1] + b[3] - pad.b;
+      this.x0 = o.x[0]; this.x1 = o.x[1]; this.y0 = o.y[0]; this.y1 = o.y[1];
+      this.xlog = !!o.xlog; this.ylog = !!o.ylog;
+    }
+    tx(v, a, b, log) { return log ? (Math.log10(v) - Math.log10(a)) / (Math.log10(b) - Math.log10(a)) : (v - a) / (b - a); }
+    X(v) { return this.L + this.tx(v, this.x0, this.x1, this.xlog) * (this.R - this.L); }
+    Y(v) { return this.B - this.tx(v, this.y0, this.y1, this.ylog) * (this.B - this.T); }
+    ix(px) { const t = (px - this.L) / (this.R - this.L); return this.xlog ? Math.pow(10, Math.log10(this.x0) + t * (Math.log10(this.x1) - Math.log10(this.x0))) : this.x0 + t * (this.x1 - this.x0); }
+    iy(py) { const t = (this.B - py) / (this.B - this.T); return this.ylog ? Math.pow(10, Math.log10(this.y0) + t * (Math.log10(this.y1) - Math.log10(this.y0))) : this.y0 + t * (this.y1 - this.y0); }
+    ticks(a, b, log, n) {
+      if (!log) return niceTicks(a, b, n);
+      const t = []; for (let k = Math.ceil(Math.log10(a) - 1e-9); k <= Math.floor(Math.log10(b) + 1e-9); k++) t.push(Math.pow(10, k));
+      return t;
+    }
+    axes(o = {}) {
+      const g = this.g;
+      g.save(); g.strokeStyle = col.ink; g.fillStyle = col.soft; g.lineWidth = 1;
+      g.font = '10.5px "Courier Prime", "Courier New", monospace';
+      if (o.grid !== false) {
+        g.strokeStyle = col.rule; g.lineWidth = .7;
+        (o.yt || this.ticks(this.y0, this.y1, this.ylog, o.ny || 4)).forEach(v => { const y = Math.round(this.Y(v)) + .5; g.beginPath(); g.moveTo(this.L, y); g.lineTo(this.R, y); g.stroke(); });
+        g.strokeStyle = col.ink; g.lineWidth = 1;
+      }
+      g.beginPath(); g.moveTo(this.L + .5, this.T); g.lineTo(this.L + .5, this.B + .5); g.lineTo(this.R, this.B + .5); g.stroke();
+      if (!o.noxt) {
+        g.textAlign = 'center'; g.textBaseline = 'top';
+        (o.xt || this.ticks(this.x0, this.x1, this.xlog, o.nx || 5)).forEach(v => { const x = this.X(v); if (x < this.L - 1 || x > this.R + 1) return; g.beginPath(); g.moveTo(x, this.B); g.lineTo(x, this.B + 4); g.stroke(); g.fillText((o.xf || fmt)(v), x, this.B + 6); });
+      }
+      if (!o.noyt) {
+        g.textAlign = 'right'; g.textBaseline = 'middle';
+        (o.yt || this.ticks(this.y0, this.y1, this.ylog, o.ny || 4)).forEach(v => { const y = this.Y(v); if (y < this.T - 1 || y > this.B + 1) return; g.beginPath(); g.moveTo(this.L - 4, y); g.lineTo(this.L, y); g.stroke(); g.fillText((o.yf || fmt)(v), this.L - 6, y); });
+      }
+      g.font = 'italic 13px Spectral, Georgia, serif'; g.fillStyle = col.ink;
+      if (o.xl) { g.textAlign = 'right'; g.textBaseline = 'bottom'; g.fillText(o.xl, this.R, this.B - 4); }
+      if (o.yl) { g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText(o.yl, this.L + 6, this.T); }
+      g.restore();
+    }
+    clip(f) { const g = this.g; g.save(); g.beginPath(); g.rect(this.L, this.T - 2, this.R - this.L, this.B - this.T + 4); g.clip(); f(); g.restore(); }
+    style(s) { const g = this.g; g.strokeStyle = s.color || col.ink; g.lineWidth = s.w || 1.4; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.setLineDash(s.dash || []); g.lineJoin = 'round'; g.lineCap = 'round'; }
+    line(xs, ys, s = {}) {
+      const g = this.g; this.clip(() => {
+        this.style(s); g.beginPath(); let on = false;
+        for (let i = 0; i < xs.length; i++) { const y = ys[i]; if (y == null || !isFinite(y)) { on = false; continue; } const px = this.X(xs[i]), py = this.Y(y); if (!on) { g.moveTo(px, py); on = true; } else g.lineTo(px, py); }
+        g.stroke();
+      });
+    }
+    fn(f, s = {}, n = 200) { const xs = [], ys = []; for (let i = 0; i <= n; i++) { const x = this.xlog ? Math.pow(10, Math.log10(this.x0) + i / n * (Math.log10(this.x1) - Math.log10(this.x0))) : this.x0 + i / n * (this.x1 - this.x0); xs.push(x); ys.push(f(x)); } this.line(xs, ys, s); }
+    steps(xs, ys, s = {}) { const X = [], Y = []; for (let i = 0; i < xs.length; i++) { if (i) { X.push(xs[i]); Y.push(ys[i - 1]); } X.push(xs[i]); Y.push(ys[i]); } this.line(X, Y, s); }
+    dots(xs, ys, s = {}) {
+      const g = this.g; this.clip(() => {
+        g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.fillStyle = s.color || col.ink; g.strokeStyle = s.color || col.ink; g.lineWidth = 1;
+        for (let i = 0; i < xs.length; i++) { if (!isFinite(ys[i])) continue; g.beginPath(); g.arc(this.X(xs[i]), this.Y(ys[i]), s.r || 2.5, 0, 7); s.hollow ? (g.fillStyle = col.paper, g.fill(), g.stroke()) : g.fill(); }
+        g.globalAlpha = 1;
+      });
+    }
+    vline(x, s = {}) { const g = this.g; this.style(s); g.beginPath(); g.moveTo(this.X(x), s.y0 != null ? this.Y(s.y0) : this.T); g.lineTo(this.X(x), s.y1 != null ? this.Y(s.y1) : this.B); g.stroke(); g.globalAlpha = 1; g.setLineDash([]); }
+    hline(y, s = {}) { const g = this.g; this.style(s); g.beginPath(); g.moveTo(this.L, this.Y(y)); g.lineTo(this.R, this.Y(y)); g.stroke(); g.globalAlpha = 1; g.setLineDash([]); }
+    band(a, b, s = {}) { const g = this.g; g.save(); g.globalAlpha = s.alpha || .15; g.fillStyle = s.color || col.ochre; g.fillRect(this.X(a), this.T, this.X(b) - this.X(a), this.B - this.T); g.restore(); }
+    text(t, x, y, s = {}) { label(this.g, t, this.X(x), this.Y(y), s); }
+  }
+  function label(g, t, x, y, s = {}) {
+    g.save(); g.fillStyle = s.color || col.ink; g.globalAlpha = s.alpha == null ? 1 : s.alpha;
+    g.font = s.font || (s.mono ? '10.5px "Courier Prime", "Courier New", monospace' : (s.italic === false ? '' : 'italic ') + (s.size || 13) + 'px Spectral, Georgia, serif');
+    g.textAlign = s.align || 'left'; g.textBaseline = s.base || 'middle'; g.fillText(t, x, y); g.restore();
+  }
+  const plot = (c, o) => new Plot(c, o);
+
+  /* drawing helpers in pixel space */
+  function circle(g, x, y, r, s = {}) { g.save(); g.beginPath(); g.arc(x, y, r, 0, 7); if (s.fill) { g.fillStyle = s.fill; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.fill(); g.globalAlpha = 1; } if (s.stroke !== false) { g.strokeStyle = s.stroke || col.ink; g.lineWidth = s.w || 1.2; g.setLineDash(s.dash || []); g.stroke(); } g.restore(); }
+  function seg(g, x1, y1, x2, y2, s = {}) { g.save(); g.strokeStyle = s.color || col.ink; g.lineWidth = s.w || 1.2; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.setLineDash(s.dash || []); g.lineCap = 'round'; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.restore(); }
+  function arrow(g, x1, y1, x2, y2, s = {}) { seg(g, x1, y1, x2, y2, s); const a = Math.atan2(y2 - y1, x2 - x1), h = s.head || 7; g.save(); g.strokeStyle = s.color || col.ink; g.lineWidth = s.w || 1.2; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.beginPath(); g.moveTo(x2 - h * Math.cos(a - .42), y2 - h * Math.sin(a - .42)); g.lineTo(x2, y2); g.lineTo(x2 - h * Math.cos(a + .42), y2 - h * Math.sin(a + .42)); g.stroke(); g.restore(); }
+  function mix(a, b, t) { /* mix two css colours by drawing; returns rgba string of a with alpha t */ return { a, b, t }; }
+  function shade(c, t) { /* colour c (hex or rgb) at alpha t */ const h = c.replace('#', ''); if (h.length >= 6) { const r = parseInt(h.slice(0, 2), 16), gg = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); return `rgba(${r},${gg},${b},${Math.max(0, Math.min(1, t)).toFixed(3)})`; } return c; }
+
+  /* controls */
+  const box = document.getElementById('controls');
+  function ctl(label) { const d = document.createElement('div'); d.className = 'ctl'; const l = document.createElement('div'); l.className = 'lab'; const a = document.createElement('span'); a.textContent = label; const v = document.createElement('span'); v.className = 'val'; l.append(a, v); d.append(l); box.append(d); return { d, v }; }
+  let nid = 0;
+  function slider(o) {
+    const { d, v } = ctl(o.label); const inp = document.createElement('input'); inp.type = 'range'; inp.id = 'c' + (++nid);
+    inp.setAttribute('aria-label', o.label);
+    const lg = !!o.log; inp.min = lg ? Math.log10(o.min) : o.min; inp.max = lg ? Math.log10(o.max) : o.max; inp.step = o.step || (lg ? .01 : (o.max - o.min) / 200); inp.value = lg ? Math.log10(o.value) : o.value;
+    d.append(inp);
+    let val = o.value; const show = () => { v.textContent = (o.fmt || fmt)(val); }; show();
+    inp.addEventListener('input', () => { val = lg ? Math.pow(10, +inp.value) : +inp.value; if (o.round) val = Math.round(val); show(); o.on && o.on(val); });
+    return { get: () => val, set: x => { val = x; inp.value = lg ? Math.log10(x) : x; show(); } };
+  }
+  function choice(o) {
+    const { d, v } = ctl(o.label); v.remove(); const s = document.createElement('div'); s.className = 'seg'; s.setAttribute('role', 'group'); s.setAttribute('aria-label', o.label);
+    let val = o.value; const bs = o.options.map(([k, l]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = l; b.setAttribute('aria-pressed', k === val); b.addEventListener('click', () => { val = k; bs.forEach((x, i) => x.setAttribute('aria-pressed', o.options[i][0] === val)); o.on && o.on(val); }); s.append(b); return b; });
+    d.append(s); return { get: () => val };
+  }
+  function button(label, on) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = label; b.addEventListener('click', on); box.append(b); return b; }
+
+  /* animation */
+  function loop(step) { let last = null; function f(t) { if (!document.hidden && last != null) step(Math.min(0.05, (t - last) / 1000)); last = t; requestAnimationFrame(f); } requestAnimationFrame(f); }
+
+  /* randomness */
+  function rng(seed) { let s = seed >>> 0 || 1; return () => { s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function gauss(r) { let u = 0; while (u === 0) u = r(); const v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+
+  /* pointer dragging on a canvas */
+  function drag(c, h) {
+    const el = c.el; let on = false;
+    const pt = e => { const r = el.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    el.addEventListener('pointerdown', e => { on = true; try { el.setPointerCapture(e.pointerId); } catch (x) {} h.down && h.down(pt(e)); e.preventDefault(); });
+    el.addEventListener('pointermove', e => { const p = pt(e); if (on) h.move && h.move(p); else h.hover && h.hover(p); });
+    const up = e => { if (on) { on = false; h.up && h.up(pt(e)); } };
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  }
+  function readout(id, html) { const el = document.getElementById('ro-' + id); if (el) el.innerHTML = html; }
+
+  /* print toggle */
+  const bp = document.getElementById('p-plate'), bc = document.getElementById('p-cyan');
+  function setPrint(p, save) {
+    if (p === 'cyan') root.setAttribute('data-print', 'cyan'); else root.removeAttribute('data-print');
+    bp.setAttribute('aria-pressed', p !== 'cyan'); bc.setAttribute('aria-pressed', p === 'cyan');
+    if (save) try { localStorage.setItem('atlas-print', p); } catch (e) {}
+    redrawAll();
+  }
+  bp.addEventListener('click', () => setPrint('plate', true));
+  bc.addEventListener('click', () => setPrint('cyan', true));
+  try { setPrint(localStorage.getItem('atlas-print') === 'cyan' ? 'cyan' : 'plate'); } catch (e) { setPrint('plate'); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(redrawAll);
+
+  return { col, cv, clear, onDraw, redraw: redrawAll, plot, label, circle, seg, arrow, shade, slider, choice, button, loop, rng, gauss, drag, readout, niceTicks, fmt };
+})();
+</script>
+<script>(function () {
+const tau = 20, th = 20, Vr = 10, tref = 2, ts = 10, dt = 0.1, T = 450, tstep = 150, mu0 = 18;
+const JEE = 0.12, JIE = 0.25, JEI = 0.2, JII = 0.1;
+let N = 500, dmu = 6, sigma = 3, res = null, timer = null;
+// e^{x^2} erfc(x), stable for large x
+function erfcx(x) {
+  if (x < 0) return 2 * Math.exp(x * x) - erfcx(-x);
+  if (x < 3) { const tt = 1 / (1 + .3275911 * x); const y = tt * (.254829592 + tt * (-.284496736 + tt * (1.421413741 + tt * (-1.453152027 + tt * 1.061405429)))); return y; }
+  const x2 = x * x; return (1 - 1 / (2 * x2) + 3 / (4 * x2 * x2) - 15 / (8 * x2 * x2 * x2)) / (x * Math.sqrt(Math.PI));
+}
+function F(mu, sg) { // rate in Hz
+  sg = Math.max(sg, 0.05);
+  const a = (Vr - mu) / sg, b = (th - mu) / sg;
+  if (b > 7) return 0;
+  const n = 120, h = (b - a) / n; let s = 0;
+  for (let i = 0; i <= n; i++) { const u = a + i * h; const v = erfcx(-u); s += (i === 0 || i === n ? 1 : i % 2 ? 4 : 2) * v; }
+  const I = s * h / 3; return 1000 / (tref + tau * Math.sqrt(Math.PI) * I);
+}
+const NT = 1 << 16, nt = new Float32Array(NT); { const r = P.rng(99); for (let i = 0; i < NT; i++) nt[i] = P.gauss(r); }
+const muExt = t => mu0 + (t >= tstep ? dmu : 0);
+function run() {
+  const r = P.rng(3), NE = Math.max(4, Math.round(.8 * N)), NI = Math.max(1, N - NE);
+  const VE = new Float32Array(NE), VI = new Float32Array(NI), rE = new Float32Array(NE), rI = new Float32Array(NI);
+  for (let i = 0; i < NE; i++) VE[i] = r() * 2; for (let i = 0; i < NI; i++) VI[i] = r() * 2;
+  let sE = 0, sI = 0, mE = 0, mI = 0; const nsd = sigma * Math.sqrt(dt / tau);
+  const bin = 5, out = { t: [], spk: [], mod: [], dotsX: [], dotsY: [] }; let cE = 0, accMu = 0, accN = 0, k = 0, bt = 0, dE = 0, dMu = 0, dN = 0, dt0 = 0;
+  for (let i = 0, t = 0; t < T; i++, t = i * dt) {
+    const muE = muExt(t) + JEE * sE - JIE * sI, muI = muExt(t) + JEI * sE - JII * sI;
+    let nE = 0, nI = 0;
+    for (let j = 0; j < NE; j++) { if (rE[j] > 0) { rE[j] -= dt; continue; } VE[j] += dt / tau * (muE - VE[j]) + nsd * nt[(k++) & (NT - 1)]; if (VE[j] >= th) { VE[j] = Vr; rE[j] = tref; nE++; } }
+    for (let j = 0; j < NI; j++) { if (rI[j] > 0) { rI[j] -= dt; continue; } VI[j] += dt / tau * (muI - VI[j]) + nsd * nt[(k++) & (NT - 1)]; if (VI[j] >= th) { VI[j] = Vr; rI[j] = tref; nI++; } }
+    k += Math.floor(r() * 977);
+    const aE = nE / NE / dt * 1000, aI = nI / NI / dt * 1000;
+    sE += dt / ts * (aE - sE); sI += dt / ts * (aI - sI);
+    const mmE = muExt(t) + JEE * mE - JIE * mI, mmI = muExt(t) + JEI * mE - JII * mI;
+    mE += dt / ts * (F(mmE, sigma) - mE); mI += dt / ts * (F(mmI, sigma) - mI);
+    cE += nE; accMu += muE; accN++;
+    if (t - bt >= bin - 1e-9) { out.t.push(bt); out.spk.push(cE / NE / (bin / 1000)); out.mod.push(mE); bt += bin; cE = 0; }
+    dE += nE; dMu += muE; dN++;
+    if (t - dt0 >= 10 - 1e-9) { if (t > 60 && Math.abs(t - tstep) > 30) { out.dotsX.push(dMu / dN); out.dotsY.push(dE / NE / 0.01); } dE = 0; dMu = 0; dN = 0; dt0 = t; }
+  }
+  res = out;
+}
+function draw() {
+  if (!res) return; const col = P.col; let c = P.cv('ov'); P.clear(c);
+  const ym = Math.max(30, ...res.spk, ...res.mod) * 1.1;
+  let p = P.plot(c, { x: [0, T], y: [0, ym] });
+  p.axes({ xl: 'time (ms)', yl: 'excitatory rate (Hz)' });
+  p.vline(tstep, { color: col.soft, dash: [3, 3], w: .8 }); p.text('input step', tstep + 3, ym * .94, { mono: true, color: col.soft });
+  p.steps(res.t, res.spk, { color: col.ink, w: 1.1 });
+  p.line(res.t, res.mod, { color: col.accent, w: 2.2 });
+  const late = res.t.map((x, i) => [x, res.spk[i], res.mod[i]]).filter(q => q[0] > tstep + 80);
+  const err = late.length ? Math.sqrt(late.reduce((a, q) => a + (q[1] - q[2]) ** 2, 0) / late.length) : 0;
+  P.readout('ov', `<span style="color:var(--ink)">spiking network</span>, ${N} neurons, binned at 5 ms · <span style="color:var(--accent)">rate model</span> · mismatch after the step ${err.toFixed(1)} Hz (rms)`);
+  c = P.cv('tf'); P.clear(c);
+  p = P.plot(c, { x: [8, 36], y: [0, 120] });
+  p.axes({ xl: 'mean input μ (mV)', yl: 'rate F(μ, σ) (Hz)' });
+  p.vline(th, { color: col.ochre, dash: [3, 3], w: .8 }); p.text('θ', th + .4, 112, { color: col.ochre });
+  p.fn(m => F(m, sigma), { color: col.accent, w: 2 }, 120);
+  p.dots(res.dotsX, res.dotsY, { r: 2.6, color: col.ink, alpha: .55 });
+  P.readout('tf', `σ = ${sigma.toFixed(1)} mV · dots: 10 ms bins of the spiking network`);
+}
+const later = () => { clearTimeout(timer); timer = setTimeout(() => { run(); draw(); }, 60); };
+P.slider({ label: 'Network size', min: 10, max: 2000, log: true, value: N, round: true, fmt: v => String(v), on: v => { N = v; later(); } });
+P.slider({ label: 'Step in external input', min: 0, max: 10, step: .5, value: dmu, fmt: v => '+' + v.toFixed(1) + ' mV', on: v => { dmu = v; later(); } });
+P.slider({ label: 'Noise σ', min: 0, max: 6, step: .1, value: sigma, fmt: v => v.toFixed(1) + ' mV', on: v => { sigma = v; later(); } });
+P.onDraw(draw); run(); draw();
+
+})();</script>
+</body></html>

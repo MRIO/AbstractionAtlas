@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Neural Mass Model of a Cortical Column</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Spectral+SC:wght@500&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap">
+<style>:root {
+  --paper: #e4e6e3;
+  --ink: #191d24;
+  --ink-soft: #565d68;
+  --accent: #1d3b63;
+  --ochre: #94661c;
+  --rule: #191d2433;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .12 0 0 0 0 .16 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --f-display: "Spectral SC", "Cormorant SC", Georgia, serif;
+  --f-text: "Spectral", Georgia, "Times New Roman", serif;
+  --f-mono: "Courier Prime", "Courier New", ui-monospace, monospace;
+  color-scheme: light;
+}
+:root[data-print="cyan"] {
+  --paper: #c7dbec;
+  --ink: #0a2350;
+  --ink-soft: #2f4f7e;
+  --accent: #a2352a;
+  --ochre: #7f5512;
+  --rule: #0a235038;
+  --grain:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .04 0 0 0 0 .14 0 0 0 0 .34 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.00625' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .05 0 0 0 0 .2 0 0 0 0 .48 0 0 0 .8 -.33'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  background-color: var(--paper); background-image: var(--grain);
+  color: var(--ink);
+  font-family: var(--f-text); font-size: 16.5px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 48px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 22px; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.top { display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: space-between; align-items: center; font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; color: var(--ink-soft); border-bottom: 1px solid var(--ink); padding-bottom: 10px; }
+.top a { color: var(--ink); text-decoration: none; text-transform: uppercase; }
+.top a:hover { color: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--ink); }
+.seg button { font-family: var(--f-mono); font-size: 12px; background: transparent; color: var(--ink); border: 0; padding: 4px 11px; cursor: pointer; letter-spacing: .04em; }
+.seg button + button { border-left: 1px solid var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+.strip { display: block; max-width: 460px; }
+.strip svg { width: 100%; height: auto; display: block; overflow: visible; }
+.strip .sd { fill: var(--ink); }
+.strip .bd { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
+.strip .md { fill: var(--paper); stroke: var(--ochre); stroke-width: 1; stroke-dasharray: 1.5 1.5; }
+.strip .sl { stroke: var(--ink); stroke-width: 1.2; }
+.strip .bl { stroke: var(--ink); stroke-width: .7; fill: none; opacity: .6; }
+.strip .hl { stroke: var(--accent); stroke-width: 3.2; fill: none; }
+.strip .hr { fill: none; stroke: var(--accent); stroke-width: 1.4; }
+.strip text { font-family: var(--f-mono); font-size: 7.5px; fill: var(--ink-soft); letter-spacing: .05em; }
+
+.head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 300px); gap: 18px 36px; align-items: end; }
+.kicker { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+h1 { font-family: var(--f-display); font-weight: 500; font-size: clamp(30px, 4.4vw, 48px); line-height: 1.04; letter-spacing: .01em; margin: 6px 0 4px; text-wrap: balance; }
+.sub { font-family: var(--f-mono); font-size: 12.5px; color: var(--ink-soft); }
+.glyphbox { margin: 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 6px 0; display: flex; align-items: center; gap: 6px; }
+.glyphbox .to { font-family: var(--f-mono); color: var(--ink-soft); }
+.glyphbox.pair .glyph { max-width: 46%; }
+
+.prose { max-width: 70ch; display: grid; gap: 10px; }
+.prose p { margin: 0; }
+.prose a.term { color: inherit; text-decoration: underline dotted var(--accent); text-underline-offset: 3px; }
+
+.widget { border: 1px solid var(--ink); padding: 5px; position: relative; }
+.widget::before { content: ""; position: absolute; inset: 3px; border: 1px solid var(--rule); pointer-events: none; }
+.widget-in { padding: 14px 16px 16px; display: grid; gap: 14px; }
+.panels { display: grid; gap: 16px 22px; align-items: start; }
+.panel { min-width: 0; display: grid; gap: 4px; }
+.panel h2 { margin: 0; font-family: var(--f-mono); font-weight: 400; font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.panel .cv { position: relative; width: 100%; }
+.panel canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.readout { font-family: var(--f-mono); font-size: 12px; color: var(--ink-soft); min-height: 1.4em; font-variant-numeric: tabular-nums; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: end; border-top: 1px solid var(--rule); padding-top: 12px; }
+.ctl { display: grid; gap: 3px; font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-soft); letter-spacing: .04em; min-width: 180px; }
+.ctl .lab { display: flex; justify-content: space-between; gap: 12px; }
+.ctl .val { color: var(--ink); font-variant-numeric: tabular-nums; }
+.ctl input[type=range] { width: 100%; accent-color: var(--accent); }
+.controls > * { max-width: 100%; }
+.ctl .seg { flex-wrap: wrap; }
+.ctl .seg button { border-bottom: 1px solid var(--ink); margin-bottom: -1px; }
+.btn { font-family: var(--f-mono); font-size: 12px; letter-spacing: .04em; background: transparent; color: var(--ink); border: 1px solid var(--ink); padding: 6px 14px; cursor: pointer; }
+.btn:hover { background: var(--ink); color: var(--paper); }
+.hint { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-soft); }
+
+.fields { display: grid; gap: 0; margin: 0; max-width: 82ch; border-top: 1px solid var(--ink); }
+.fields div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px; border-bottom: 1px solid var(--rule); padding: 9px 0; }
+.fields dt { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); padding-top: 3px; }
+.fields dd { margin: 0; }
+.fields .ask dd { font-style: italic; }
+
+details.box { border-top: 1px solid var(--ink); max-width: 82ch; }
+details.box + details.box { border-top: 1px solid var(--rule); }
+details.box summary { cursor: pointer; list-style: none; padding: 10px 0; font-family: var(--f-mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; display: flex; justify-content: space-between; }
+details.box summary::-webkit-details-marker { display: none; }
+details.box summary::after { content: "+"; font-size: 15px; line-height: 1; }
+details.box[open] summary::after { content: "−"; }
+details.box .inner { padding: 2px 0 16px; display: grid; gap: 10px; }
+.eq { font-family: var(--f-text); font-size: 17px; line-height: 1.7; overflow-x: auto; }
+.eq div { white-space: nowrap; }
+.eq .note { white-space: normal; font-size: 14.5px; color: var(--ink-soft); }
+.eq i { font-style: italic; }
+pre.pseudo { font-family: var(--f-mono); font-size: 13px; line-height: 1.6; margin: 0; white-space: pre-wrap; overflow-x: auto; }
+.flow { max-width: 420px; }
+.flow svg { width: 100%; height: auto; display: block; }
+.flow rect, .flow path.d { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
+.flow path.a { fill: none; stroke: var(--ink); stroke-width: 1; }
+.flow text { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink); }
+.flow text.s { fill: var(--ink-soft); font-size: 9.5px; }
+
+footer.foot { border-top: 3px double var(--ink); padding-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 36px; font-size: 15px; }
+footer h3 { margin: 0 0 6px; font-family: var(--f-mono); font-weight: 400; font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+footer li .d { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-right: 6px; }
+.g { font-size: 13px; margin-right: 6px; }
+.g-est { color: var(--ink); } .g-lik { color: var(--accent); } .g-unv { color: var(--ochre); }
+.seq { display: flex; justify-content: space-between; gap: 16px; font-family: var(--f-mono); font-size: 12px; letter-spacing: .04em; border-top: 1px solid var(--rule); padding-top: 10px; }
+.seq a { text-decoration: none; }
+
+.glyph { width: 100%; max-width: 300px; height: auto; display: block; color: var(--ink); fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.glyph text { fill: var(--ink-soft); stroke: none; font-family: var(--f-mono); font-size: 9px; }
+.glyph .f { fill: currentColor; } .glyph .p { fill: var(--paper); } .glyph .a { stroke: var(--accent); } .glyph .af { fill: var(--accent); stroke: none; }
+.glyph .o { stroke: var(--ochre); } .glyph .of { fill: var(--ochre); stroke: none; } .glyph .ow { fill: var(--ochre); stroke: none; opacity: .18; }
+.glyph .d { stroke-dasharray: 3 3; } .glyph .t { stroke-width: .8; opacity: .55; } .glyph .n { stroke: none; }
+
+@media (max-width: 760px) {
+  .head { grid-template-columns: minmax(0, 1fr); }
+  .glyphbox { max-width: 320px; }
+  .panels { grid-template-columns: minmax(0, 1fr) !important; }
+  .fields div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+}
+</style></head><body>
+<div class="wrap">
+<div class="top"><a href="../index.html#neural-mass">← The Abstraction Atlas</a><span>Plate XVIII</span><div class="seg" role="group" aria-label="Print"><button type="button" id="p-plate" aria-pressed="true">Plate</button><button type="button" id="p-cyan" aria-pressed="false">Cyanotype</button></div></div>
+<a class="strip" href="../index.html#neural-mass"><svg viewBox="0 -4 440 74" role="img" aria-label="Position on the Atlas"><line class="sl" x1="20" y1="16" x2="60" y2="16"/><line class="sl" x1="60" y1="16" x2="100" y2="16"/><line class="sl" x1="100" y1="16" x2="140" y2="16"/><line class="sl" x1="140" y1="16" x2="180" y2="16"/><line class="sl" x1="180" y1="16" x2="220" y2="16"/><line class="sl" x1="220" y1="16" x2="260" y2="16"/><line class="sl" x1="260" y1="16" x2="300" y2="16"/><line class="sl" x1="300" y1="16" x2="340" y2="16"/><line class="sl" x1="340" y1="16" x2="380" y2="16"/><line class="sl" x1="380" y1="16" x2="420" y2="16"/><path class="bl" d="M260,16 L270,40"/><path class="bl" d="M220,16 L214,40"/><path class="bl" d="M340,16 L340,40"/><path class="bl" d="M420,16 L408,40"/><path class="bl" d="M420,16 L432,40"/><circle class="sd" cx="20" cy="16" r="3.2"/><circle class="sd" cx="60" cy="16" r="3.2"/><circle class="sd" cx="100" cy="16" r="3.2"/><circle class="sd" cx="140" cy="16" r="3.2"/><circle class="sd" cx="180" cy="16" r="3.2"/><circle class="sd" cx="220" cy="16" r="3.2"/><circle class="sd" cx="260" cy="16" r="3.2"/><circle class="sd" cx="300" cy="16" r="3.2"/><circle class="sd" cx="340" cy="16" r="3.2"/><circle class="sd" cx="380" cy="16" r="3.2"/><circle class="sd" cx="420" cy="16" r="3.2"/><circle class="bd" cx="270" cy="40" r="2.8"/><circle class="bd" cx="214" cy="40" r="2.8"/><circle class="bd" cx="340" cy="40" r="2.8"/><circle class="bd" cx="408" cy="40" r="2.8"/><circle class="bd" cx="432" cy="40" r="2.8"/><circle class="md" cx="40" cy="62" r="2.8"/><circle class="md" cx="114" cy="62" r="2.8"/><circle class="md" cx="188" cy="62" r="2.8"/><circle class="md" cx="262" cy="62" r="2.8"/><circle class="md" cx="336" cy="62" r="2.8"/><circle class="md" cx="410" cy="62" r="2.8"/><circle class="hr" cx="340" cy="16" r="7"/><text x="0" y="5">DETAIL</text><text x="440" y="5" text-anchor="end">PARSIMONY</text><text x="0" y="52">MODULATORS</text></svg></a>
+<header class="head"><div><div class="kicker">Node plate · Main spine, level 9 of 11</div><h1>Neural Mass Model of a Cortical Column</h1><div class="sub">one column · 10 to 100 ms</div></div><figure class="glyphbox"><svg class="glyph" viewBox="0 0 220 110" aria-hidden="true"><path class="p" d="M110.0,21.0 L119.6,37.5 L100.4,37.5 Z"/><circle class="p" cx="55.0" cy="86.0" r="9"/><circle class="f" cx="165.0" cy="86.0" r="9"/><path class="" d="M98.0,40.0 L62.0,77.0 M63.9,71.3 L62.0,77.0 L67.6,74.9"/><path class="" d="M68.0,81.0 L104.0,45.0 M102.0,50.7 L104.0,45.0 L98.3,47.0"/><path class="" d="M122.0,40.0 L158.0,77.0 M152.4,74.9 L158.0,77.0 L156.1,71.3"/><path class="" d="M154.0,82.0 L117.0,45.0"/><circle class="f n" cx="117.0" cy="45.0" r="2.6"/><path class="" d="M10.0,32.0 L96.0,32.0 M90.6,34.6 L96.0,32.0 L90.6,29.4"/><text x="12" y="26" text-anchor="start">p(t)</text><path class="a" d="M124.0,32.0 L212.0,32.0 M206.6,34.6 L212.0,32.0 L206.6,29.4"/><text x="212" y="26" text-anchor="end">EEG-like</text><text x="55" y="107" text-anchor="middle">exc</text><text x="165" y="107" text-anchor="middle">inh</text><text x="110" y="14" text-anchor="middle">pyr</text></svg></figure></header>
+<div class="prose"><p>This neural mass model describes a cortical column by three interacting populations, pyramidal cells with excitatory and inhibitory interneurons. Each connection passes the presynaptic firing rate through a synaptic kernel, fast for excitation and slow for inhibition, and a sigmoid turns the resulting mean membrane potential back into a rate.</p><p>The left panel draws the three populations with the impulse response of each kernel. The right panel shows the pyramidal potential, the model's stand-in for the EEG (and the LFP), with its power spectrum beneath it. Change the noise in the input and the ratio of excitatory to inhibitory gain.</p><p>At standard settings the model produces an alpha rhythm near 10 Hz. Raising the excitatory gain pushes it towards large, slow, spike-wave-like discharges, and lowering it quiets the rhythm until only filtered noise remains.</p></div>
+<section class="widget" aria-label="Interactive model"><div class="widget-in"><div class="panels" style="grid-template-columns:minmax(0,3fr) minmax(0,2fr)"><div class="panel"><h2>Populations and synaptic kernels</h2><div class="cv" data-aspect="0.9" data-maxh="480"><canvas id="dia" aria-label="Populations and synaptic kernels"></canvas></div><div class="readout" id="ro-dia"></div></div><div class="panel"><h2>Pyramidal potential (EEG, LFP) and spectrum</h2><div class="cv" data-aspect="0.9" data-maxh="480"><canvas id="eeg" aria-label="Pyramidal potential (EEG, LFP) and spectrum"></canvas></div><div class="readout" id="ro-eeg"></div></div></div><div class="controls" id="controls"></div></div></section>
+<dl class="fields"><div class="ask"><dt>Ask yourself</dt><dd>The frequency of the rhythm depends mostly on the time constants of the synaptic kernels. Which kernel would you lengthen to slow the rhythm, and why?</dd></div></dl>
+<details class="box"><summary>Equations</summary><div class="inner eq"><div>h<sub>e</sub>(t) = A a t e<sup>−a t</sup>,&nbsp;&nbsp; h<sub>i</sub>(t) = B b t e<sup>−b t</sup></div>
+<div>S(v) = 2e<sub>0</sub> / (1 + e<sup>r(v<sub>0</sub> − v)</sup>)</div>
+<div>y<sub>0</sub>″ = A a S(y<sub>1</sub> − y<sub>2</sub>) − 2a y<sub>0</sub>′ − a² y<sub>0</sub></div>
+<div>y<sub>1</sub>″ = A a [p(t) + C<sub>2</sub> S(C<sub>1</sub> y<sub>0</sub>)] − 2a y<sub>1</sub>′ − a² y<sub>1</sub></div>
+<div>y<sub>2</sub>″ = B b C<sub>4</sub> S(C<sub>3</sub> y<sub>0</sub>) − 2b y<sub>2</sub>′ − b² y<sub>2</sub></div>
+<div class="note">A = 3.25 mV, B = 22 mV, a = 100 s⁻¹, b = 50 s⁻¹, C<sub>1</sub> = 135, C<sub>2</sub> = 108, C<sub>3</sub> = C<sub>4</sub> = 33.75, e<sub>0</sub> = 2.5 s⁻¹, v<sub>0</sub> = 6 mV, r = 0.56 mV⁻¹; input p(t) is noise around 220 s⁻¹. The gain slider sets A with B fixed.</div></div></details>
+<details class="box"><summary>Pseudocode</summary><div class="inner"><pre class="pseudo">for each time step dt:
+    rate into pyramidal cells ← S(y1 − y2)
+    each kernel is a damped second-order filter:
+        y&#x27;&#x27; ← gain·rate·k − 2k·y&#x27; − k²·y
+    y0 from pyramidal output, y1 from excitatory input plus noise p(t), y2 from inhibition
+EEG proxy ← y1 − y2;  spectrum ← |FFT(last 4 s)|²</pre></div></details>
+<footer class="foot"><div><h3>Originators</h3><ul><li><span class="g g-lik" title="likely">◐</span>Lopes da Silva et al. (1974)</li><li><span class="g g-est" title="established">●</span>Jansen and Rit (1995)</li></ul></div><div><h3>On the Atlas</h3><ul><li><span class="d">Plate I</span><a href="../index.html#neural-mass">This node on the Atlas</a></li><li><span class="d">Zoom in</span><a href="17-lumped-population-approximation.html">Lumped Population Approximation</a></li><li><span class="d">Zoom out</span><a href="19-continuum-limit.html">The Continuum Limit</a></li><li><span class="d">Branch</span><a href="27-phase-reduction.html">Phase Reduction</a></li><li><span class="d">Modulated by</span><a href="35-synaptic-depression-and-facilitation.html">Synaptic Depression and Facilitation</a></li><li><span class="d">Modulated by</span><a href="36-neuromodulatory-gain-control.html">Neuromodulatory Gain Control</a></li><li><span class="d">Modulated by</span><a href="37-phase-dependent-gating.html">Phase-Dependent Gating</a></li></ul></div></footer>
+<nav class="seq"><a href="17-lumped-population-approximation.html">← Plate XVII · Lumped Population Approximation</a><a href="19-continuum-limit.html">Plate XIX · The Continuum Limit →</a></nav>
+</div>
+<script>/* Shared runtime for Atlas plates: colours, canvases, plots, controls, animation. */
+const P = (() => {
+  const root = document.documentElement;
+  const col = {};
+  function readCols() {
+    const cs = getComputedStyle(root);
+    col.paper = cs.getPropertyValue('--paper').trim();
+    col.ink = cs.getPropertyValue('--ink').trim();
+    col.soft = cs.getPropertyValue('--ink-soft').trim();
+    col.accent = cs.getPropertyValue('--accent').trim();
+    col.ochre = cs.getPropertyValue('--ochre').trim();
+    col.rule = cs.getPropertyValue('--rule').trim();
+  }
+  readCols();
+
+  /* canvases */
+  const cvs = {}, draws = [];
+  let pending = false;
+  function redrawAll() { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; readCols(); draws.forEach(f => { try { f(); } catch (e) { console.error(e); } }); }); }
+  function setup(el) {
+    const wrap = el.parentElement;
+    const asp = +wrap.dataset.aspect || 0.6, maxh = +wrap.dataset.maxh || 520;
+    const o = { el, ctx: el.getContext('2d'), w: 0, h: 0 };
+    o.fit = () => {
+      const w = Math.max(10, wrap.clientWidth), h = Math.min(maxh, Math.round(w * asp));
+      wrap.style.height = h + 'px';
+      const dpr = window.devicePixelRatio || 1;
+      el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+      o.w = w; o.h = h; o.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    o.fit();
+    let lw = wrap.clientWidth;
+    new ResizeObserver(() => { if (wrap.clientWidth !== lw) { lw = wrap.clientWidth; o.fit(); redrawAll(); } }).observe(wrap);
+    return o;
+  }
+  document.querySelectorAll('.panel canvas').forEach(el => cvs[el.id] = setup(el));
+  const cv = id => cvs[id];
+  const clear = c => { c.ctx.clearRect(0, 0, c.w, c.h); };
+  const onDraw = f => { draws.push(f); };
+
+  /* numbers */
+  function niceTicks(a, b, n = 5) {
+    const span = b - a; if (!(span > 0)) return [a];
+    const s0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(s0))), e = s0 / mag;
+    const st = (e >= 7.5 ? 10 : e >= 3.5 ? 5 : e >= 1.5 ? 2 : 1) * mag;
+    const t = []; for (let v = Math.ceil(a / st - 1e-9) * st; v <= b + st * 1e-9; v += st) t.push(+v.toFixed(10));
+    return t;
+  }
+  const fmt = v => { const a = Math.abs(v); if (a === 0) return '0'; if (a >= 1e4 || a < 1e-3) return v.toExponential(0).replace('e+', 'e'); return String(+v.toPrecision(4)); };
+
+  /* plot */
+  class Plot {
+    constructor(c, o) {
+      this.c = c; this.g = c.ctx;
+      const b = o.box || [0, 0, c.w, c.h];
+      const pad = Object.assign({ l: 48, r: 12, t: 10, b: 34 }, o.pad || {});
+      this.L = b[0] + pad.l; this.R = b[0] + b[2] - pad.r; this.T = b[1] + pad.t; this.B = b[1] + b[3] - pad.b;
+      this.x0 = o.x[0]; this.x1 = o.x[1]; this.y0 = o.y[0]; this.y1 = o.y[1];
+      this.xlog = !!o.xlog; this.ylog = !!o.ylog;
+    }
+    tx(v, a, b, log) { return log ? (Math.log10(v) - Math.log10(a)) / (Math.log10(b) - Math.log10(a)) : (v - a) / (b - a); }
+    X(v) { return this.L + this.tx(v, this.x0, this.x1, this.xlog) * (this.R - this.L); }
+    Y(v) { return this.B - this.tx(v, this.y0, this.y1, this.ylog) * (this.B - this.T); }
+    ix(px) { const t = (px - this.L) / (this.R - this.L); return this.xlog ? Math.pow(10, Math.log10(this.x0) + t * (Math.log10(this.x1) - Math.log10(this.x0))) : this.x0 + t * (this.x1 - this.x0); }
+    iy(py) { const t = (this.B - py) / (this.B - this.T); return this.ylog ? Math.pow(10, Math.log10(this.y0) + t * (Math.log10(this.y1) - Math.log10(this.y0))) : this.y0 + t * (this.y1 - this.y0); }
+    ticks(a, b, log, n) {
+      if (!log) return niceTicks(a, b, n);
+      const t = []; for (let k = Math.ceil(Math.log10(a) - 1e-9); k <= Math.floor(Math.log10(b) + 1e-9); k++) t.push(Math.pow(10, k));
+      return t;
+    }
+    axes(o = {}) {
+      const g = this.g;
+      g.save(); g.strokeStyle = col.ink; g.fillStyle = col.soft; g.lineWidth = 1;
+      g.font = '10.5px "Courier Prime", "Courier New", monospace';
+      if (o.grid !== false) {
+        g.strokeStyle = col.rule; g.lineWidth = .7;
+        (o.yt || this.ticks(this.y0, this.y1, this.ylog, o.ny || 4)).forEach(v => { const y = Math.round(this.Y(v)) + .5; g.beginPath(); g.moveTo(this.L, y); g.lineTo(this.R, y); g.stroke(); });
+        g.strokeStyle = col.ink; g.lineWidth = 1;
+      }
+      g.beginPath(); g.moveTo(this.L + .5, this.T); g.lineTo(this.L + .5, this.B + .5); g.lineTo(this.R, this.B + .5); g.stroke();
+      if (!o.noxt) {
+        g.textAlign = 'center'; g.textBaseline = 'top';
+        (o.xt || this.ticks(this.x0, this.x1, this.xlog, o.nx || 5)).forEach(v => { const x = this.X(v); if (x < this.L - 1 || x > this.R + 1) return; g.beginPath(); g.moveTo(x, this.B); g.lineTo(x, this.B + 4); g.stroke(); g.fillText((o.xf || fmt)(v), x, this.B + 6); });
+      }
+      if (!o.noyt) {
+        g.textAlign = 'right'; g.textBaseline = 'middle';
+        (o.yt || this.ticks(this.y0, this.y1, this.ylog, o.ny || 4)).forEach(v => { const y = this.Y(v); if (y < this.T - 1 || y > this.B + 1) return; g.beginPath(); g.moveTo(this.L - 4, y); g.lineTo(this.L, y); g.stroke(); g.fillText((o.yf || fmt)(v), this.L - 6, y); });
+      }
+      g.font = 'italic 13px Spectral, Georgia, serif'; g.fillStyle = col.ink;
+      if (o.xl) { g.textAlign = 'right'; g.textBaseline = 'bottom'; g.fillText(o.xl, this.R, this.B - 4); }
+      if (o.yl) { g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText(o.yl, this.L + 6, this.T); }
+      g.restore();
+    }
+    clip(f) { const g = this.g; g.save(); g.beginPath(); g.rect(this.L, this.T - 2, this.R - this.L, this.B - this.T + 4); g.clip(); f(); g.restore(); }
+    style(s) { const g = this.g; g.strokeStyle = s.color || col.ink; g.lineWidth = s.w || 1.4; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.setLineDash(s.dash || []); g.lineJoin = 'round'; g.lineCap = 'round'; }
+    line(xs, ys, s = {}) {
+      const g = this.g; this.clip(() => {
+        this.style(s); g.beginPath(); let on = false;
+        for (let i = 0; i < xs.length; i++) { const y = ys[i]; if (y == null || !isFinite(y)) { on = false; continue; } const px = this.X(xs[i]), py = this.Y(y); if (!on) { g.moveTo(px, py); on = true; } else g.lineTo(px, py); }
+        g.stroke();
+      });
+    }
+    fn(f, s = {}, n = 200) { const xs = [], ys = []; for (let i = 0; i <= n; i++) { const x = this.xlog ? Math.pow(10, Math.log10(this.x0) + i / n * (Math.log10(this.x1) - Math.log10(this.x0))) : this.x0 + i / n * (this.x1 - this.x0); xs.push(x); ys.push(f(x)); } this.line(xs, ys, s); }
+    steps(xs, ys, s = {}) { const X = [], Y = []; for (let i = 0; i < xs.length; i++) { if (i) { X.push(xs[i]); Y.push(ys[i - 1]); } X.push(xs[i]); Y.push(ys[i]); } this.line(X, Y, s); }
+    dots(xs, ys, s = {}) {
+      const g = this.g; this.clip(() => {
+        g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.fillStyle = s.color || col.ink; g.strokeStyle = s.color || col.ink; g.lineWidth = 1;
+        for (let i = 0; i < xs.length; i++) { if (!isFinite(ys[i])) continue; g.beginPath(); g.arc(this.X(xs[i]), this.Y(ys[i]), s.r || 2.5, 0, 7); s.hollow ? (g.fillStyle = col.paper, g.fill(), g.stroke()) : g.fill(); }
+        g.globalAlpha = 1;
+      });
+    }
+    vline(x, s = {}) { const g = this.g; this.style(s); g.beginPath(); g.moveTo(this.X(x), s.y0 != null ? this.Y(s.y0) : this.T); g.lineTo(this.X(x), s.y1 != null ? this.Y(s.y1) : this.B); g.stroke(); g.globalAlpha = 1; g.setLineDash([]); }
+    hline(y, s = {}) { const g = this.g; this.style(s); g.beginPath(); g.moveTo(this.L, this.Y(y)); g.lineTo(this.R, this.Y(y)); g.stroke(); g.globalAlpha = 1; g.setLineDash([]); }
+    band(a, b, s = {}) { const g = this.g; g.save(); g.globalAlpha = s.alpha || .15; g.fillStyle = s.color || col.ochre; g.fillRect(this.X(a), this.T, this.X(b) - this.X(a), this.B - this.T); g.restore(); }
+    text(t, x, y, s = {}) { label(this.g, t, this.X(x), this.Y(y), s); }
+  }
+  function label(g, t, x, y, s = {}) {
+    g.save(); g.fillStyle = s.color || col.ink; g.globalAlpha = s.alpha == null ? 1 : s.alpha;
+    g.font = s.font || (s.mono ? '10.5px "Courier Prime", "Courier New", monospace' : (s.italic === false ? '' : 'italic ') + (s.size || 13) + 'px Spectral, Georgia, serif');
+    g.textAlign = s.align || 'left'; g.textBaseline = s.base || 'middle'; g.fillText(t, x, y); g.restore();
+  }
+  const plot = (c, o) => new Plot(c, o);
+
+  /* drawing helpers in pixel space */
+  function circle(g, x, y, r, s = {}) { g.save(); g.beginPath(); g.arc(x, y, r, 0, 7); if (s.fill) { g.fillStyle = s.fill; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.fill(); g.globalAlpha = 1; } if (s.stroke !== false) { g.strokeStyle = s.stroke || col.ink; g.lineWidth = s.w || 1.2; g.setLineDash(s.dash || []); g.stroke(); } g.restore(); }
+  function seg(g, x1, y1, x2, y2, s = {}) { g.save(); g.strokeStyle = s.color || col.ink; g.lineWidth = s.w || 1.2; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.setLineDash(s.dash || []); g.lineCap = 'round'; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.restore(); }
+  function arrow(g, x1, y1, x2, y2, s = {}) { seg(g, x1, y1, x2, y2, s); const a = Math.atan2(y2 - y1, x2 - x1), h = s.head || 7; g.save(); g.strokeStyle = s.color || col.ink; g.lineWidth = s.w || 1.2; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.beginPath(); g.moveTo(x2 - h * Math.cos(a - .42), y2 - h * Math.sin(a - .42)); g.lineTo(x2, y2); g.lineTo(x2 - h * Math.cos(a + .42), y2 - h * Math.sin(a + .42)); g.stroke(); g.restore(); }
+  function mix(a, b, t) { /* mix two css colours by drawing; returns rgba string of a with alpha t */ return { a, b, t }; }
+  function shade(c, t) { /* colour c (hex or rgb) at alpha t */ const h = c.replace('#', ''); if (h.length >= 6) { const r = parseInt(h.slice(0, 2), 16), gg = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); return `rgba(${r},${gg},${b},${Math.max(0, Math.min(1, t)).toFixed(3)})`; } return c; }
+
+  /* controls */
+  const box = document.getElementById('controls');
+  function ctl(label) { const d = document.createElement('div'); d.className = 'ctl'; const l = document.createElement('div'); l.className = 'lab'; const a = document.createElement('span'); a.textContent = label; const v = document.createElement('span'); v.className = 'val'; l.append(a, v); d.append(l); box.append(d); return { d, v }; }
+  let nid = 0;
+  function slider(o) {
+    const { d, v } = ctl(o.label); const inp = document.createElement('input'); inp.type = 'range'; inp.id = 'c' + (++nid);
+    inp.setAttribute('aria-label', o.label);
+    const lg = !!o.log; inp.min = lg ? Math.log10(o.min) : o.min; inp.max = lg ? Math.log10(o.max) : o.max; inp.step = o.step || (lg ? .01 : (o.max - o.min) / 200); inp.value = lg ? Math.log10(o.value) : o.value;
+    d.append(inp);
+    let val = o.value; const show = () => { v.textContent = (o.fmt || fmt)(val); }; show();
+    inp.addEventListener('input', () => { val = lg ? Math.pow(10, +inp.value) : +inp.value; if (o.round) val = Math.round(val); show(); o.on && o.on(val); });
+    return { get: () => val, set: x => { val = x; inp.value = lg ? Math.log10(x) : x; show(); } };
+  }
+  function choice(o) {
+    const { d, v } = ctl(o.label); v.remove(); const s = document.createElement('div'); s.className = 'seg'; s.setAttribute('role', 'group'); s.setAttribute('aria-label', o.label);
+    let val = o.value; const bs = o.options.map(([k, l]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = l; b.setAttribute('aria-pressed', k === val); b.addEventListener('click', () => { val = k; bs.forEach((x, i) => x.setAttribute('aria-pressed', o.options[i][0] === val)); o.on && o.on(val); }); s.append(b); return b; });
+    d.append(s); return { get: () => val };
+  }
+  function button(label, on) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = label; b.addEventListener('click', on); box.append(b); return b; }
+
+  /* animation */
+  function loop(step) { let last = null; function f(t) { if (!document.hidden && last != null) step(Math.min(0.05, (t - last) / 1000)); last = t; requestAnimationFrame(f); } requestAnimationFrame(f); }
+
+  /* randomness */
+  function rng(seed) { let s = seed >>> 0 || 1; return () => { s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function gauss(r) { let u = 0; while (u === 0) u = r(); const v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+
+  /* pointer dragging on a canvas */
+  function drag(c, h) {
+    const el = c.el; let on = false;
+    const pt = e => { const r = el.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    el.addEventListener('pointerdown', e => { on = true; try { el.setPointerCapture(e.pointerId); } catch (x) {} h.down && h.down(pt(e)); e.preventDefault(); });
+    el.addEventListener('pointermove', e => { const p = pt(e); if (on) h.move && h.move(p); else h.hover && h.hover(p); });
+    const up = e => { if (on) { on = false; h.up && h.up(pt(e)); } };
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  }
+  function readout(id, html) { const el = document.getElementById('ro-' + id); if (el) el.innerHTML = html; }
+
+  /* print toggle */
+  const bp = document.getElementById('p-plate'), bc = document.getElementById('p-cyan');
+  function setPrint(p, save) {
+    if (p === 'cyan') root.setAttribute('data-print', 'cyan'); else root.removeAttribute('data-print');
+    bp.setAttribute('aria-pressed', p !== 'cyan'); bc.setAttribute('aria-pressed', p === 'cyan');
+    if (save) try { localStorage.setItem('atlas-print', p); } catch (e) {}
+    redrawAll();
+  }
+  bp.addEventListener('click', () => setPrint('plate', true));
+  bc.addEventListener('click', () => setPrint('cyan', true));
+  try { setPrint(localStorage.getItem('atlas-print') === 'cyan' ? 'cyan' : 'plate'); } catch (e) { setPrint('plate'); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(redrawAll);
+
+  return { col, cv, clear, onDraw, redraw: redrawAll, plot, label, circle, seg, arrow, shade, slider, choice, button, loop, rng, gauss, drag, readout, niceTicks, fmt };
+})();
+</script>
+<script>(function () {
+/* Three-population neural mass (cortical column); time in seconds, potentials in mV */
+const JR = { B: 22, a: 100, b: 50, C: 135, e0: 2.5, v0: 6, r: 0.56 };
+const Sjr = v => 2 * JR.e0 / (1 + Math.exp(JR.r * (JR.v0 - v)));
+function jrStep(y, A, p, dt) {
+  const { B, a, b, C } = JR, C1 = C, C2 = .8 * C, C3 = .25 * C, C4 = .25 * C;
+  const d0 = y[3], d1 = y[4], d2 = y[5];
+  const d3 = A * a * Sjr(y[1] - y[2]) - 2 * a * y[3] - a * a * y[0];
+  const d4 = A * a * (p + C2 * Sjr(C1 * y[0])) - 2 * a * y[4] - a * a * y[1];
+  const d5 = B * b * C4 * Sjr(C3 * y[0]) - 2 * b * y[5] - b * b * y[2];
+  y[0] += dt * d0; y[1] += dt * d1; y[2] += dt * d2; y[3] += dt * d3; y[4] += dt * d4; y[5] += dt * d5;
+}
+function fft(re, im) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) { let bit = n >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit; if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; } }
+  for (let len = 2; len <= n; len <<= 1) { const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < n; i += len) { let cr = 1, ci = 0; for (let j = 0; j < len / 2; j++) { const ur = re[i + j], ui = im[i + j], vr = re[i + j + len / 2] * cr - im[i + j + len / 2] * ci, vi = re[i + j + len / 2] * ci + im[i + j + len / 2] * cr; re[i + j] = ur + vr; im[i + j] = ui + vi; re[i + j + len / 2] = ur - vr; im[i + j + len / 2] = ui - vi; const nr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = nr; } } }
+}
+
+let A = 3.25, sig = 150, y = [0, 0, 0, 0, 0, 0], buf = [], spec = null, sinceSpec = 0;
+const r = P.rng(4), dt = 1e-4, FS = 1000, NB = 4096;
+function step(sec) {
+  const n = Math.round(sec / dt);
+  for (let i = 0; i < n; i++) { jrStep(y, A, 220 + sig * P.gauss(r), dt); if (i % 10 === 0) buf.push(y[1] - y[2]); }
+  if (buf.length > NB) buf.splice(0, buf.length - NB);
+  sinceSpec += sec; if (sinceSpec > .5 && buf.length >= 1024) { sinceSpec = 0; spectrum(); }
+}
+function spectrum() {
+  const n = buf.length >= NB ? NB : 1024, seg = buf.slice(-n), m = seg.reduce((a, b) => a + b, 0) / n;
+  const re = new Float64Array(n), im = new Float64Array(n); for (let i = 0; i < n; i++) re[i] = (seg[i] - m) * (.5 - .5 * Math.cos(2 * Math.PI * i / (n - 1)));
+  fft(re, im); const f = [], pw = []; for (let k = 1; k < n / 2; k++) { const fr = k * FS / n; if (fr > 40) break; f.push(fr); pw.push(re[k] ** 2 + im[k] ** 2); }
+  spec = { f, pw };
+}
+function kernel(g, x, y0, w, h, gain, rate, color) {
+  g.save(); g.strokeStyle = P.col.rule; g.strokeRect(x, y0, w, h); g.strokeStyle = color; g.lineWidth = 1.4; g.beginPath();
+  for (let i = 0; i <= 60; i++) { const t = i / 60 * .1, v = rate * t * Math.exp(1 - rate * t); const px = x + i / 60 * w, py = y0 + h - 3 - v * (h - 6); i ? g.lineTo(px, py) : g.moveTo(px, py); }
+  g.stroke(); g.restore();
+}
+function drawDia() {
+  const col = P.col, c = P.cv('dia'), g = c.ctx; P.clear(c);
+  const W = c.w, H = c.h, P0 = [W * .5, H * .22], E0 = [W * .2, H * .72], I0 = [W * .8, H * .72];
+  P.arrow(g, P0[0] - 20, P0[1] + 16, E0[0] + 14, E0[1] - 16, { w: 1.3 }); P.arrow(g, E0[0] + 24, E0[1] - 8, P0[0] - 8, P0[1] + 22, { w: 1.3, color: col.accent });
+  P.arrow(g, P0[0] + 20, P0[1] + 16, I0[0] - 14, I0[1] - 16, { w: 1.3 }); P.seg(g, I0[0] - 24, I0[1] - 8, P0[0] + 9, P0[1] + 22, { w: 1.3, color: col.ochre }); P.circle(g, P0[0] + 9, P0[1] + 22, 3, { fill: col.ochre, stroke: col.ochre });
+  g.save(); g.fillStyle = col.paper; g.strokeStyle = col.ink; g.lineWidth = 1.4; g.beginPath(); g.moveTo(P0[0], P0[1] - 18); g.lineTo(P0[0] + 16, P0[1] + 10); g.lineTo(P0[0] - 16, P0[1] + 10); g.closePath(); g.fill(); g.stroke(); g.restore();
+  P.circle(g, E0[0], E0[1], 14, { fill: col.paper }); P.circle(g, I0[0], I0[1], 14, { fill: col.ink });
+  P.label(g, 'pyramidal cells', P0[0], P0[1] - 28, { align: 'center' }); P.label(g, 'excitatory', E0[0], E0[1] + 28, { align: 'center' }); P.label(g, 'interneurons', E0[0], E0[1] + 44, { align: 'center' });
+  P.label(g, 'inhibitory', I0[0], I0[1] + 28, { align: 'center' }); P.label(g, 'interneurons', I0[0], I0[1] + 44, { align: 'center' });
+  P.arrow(g, P0[0] - 70, P0[1] - 2, P0[0] - 20, P0[1] - 2, { color: col.soft }); P.label(g, 'p(t)', P0[0] - 74, P0[1] - 2, { align: 'right', mono: true });
+  P.arrow(g, P0[0] + 20, P0[1] - 2, P0[0] + 70, P0[1] - 2, { color: col.soft }); P.label(g, 'EEG', P0[0] + 74, P0[1] - 2, { mono: true });
+  const kw = Math.min(110, W * .26), kh = Math.min(56, H * .15);
+  kernel(g, W * .5 - kw - 6, H * .46, kw, kh, A, JR.a, col.accent); P.label(g, 'h_e, fast', W * .5 - kw - 6, H * .46 + kh + 12, { mono: true, color: col.accent });
+  kernel(g, W * .5 + 6, H * .46, kw, kh, JR.B, JR.b, col.ochre); P.label(g, 'h_i, slow', W * .5 + 6, H * .46 + kh + 12, { mono: true, color: col.ochre });
+  P.readout('dia', `A/B = ${(A / JR.B).toFixed(3)} (A = ${A.toFixed(2)} mV, B = ${JR.B} mV) · kernels over 100 ms`);
+}
+function drawEEG() {
+  const col = P.col, c = P.cv('eeg'); P.clear(c);
+  const show = buf.slice(-2000), xs = show.map((_, i) => (i - show.length) / FS);
+  const lo = Math.min(-2, ...show), hi = Math.max(14, ...show);
+  const p = P.plot(c, { box: [0, 0, c.w, c.h * .55], x: [-2, 0], y: [lo, hi], pad: { b: 30 } });
+  p.axes({ xl: 'time (s)', yl: 'y₁ − y₂ (mV)', ny: 3 }); p.line(xs, show, { color: col.ink, w: 1.2 });
+  if (!spec) return;
+  const mx = Math.max(...spec.pw) || 1, q = P.plot(c, { box: [0, c.h * .55, c.w, c.h * .45], x: [0, 40], y: [0, 1.05], pad: { t: 10 } });
+  q.axes({ xl: 'frequency (Hz)', yl: 'power', noyt: true });
+  q.band(8, 12, { color: col.ochre, alpha: .1 }); q.text('alpha', 8.3, .95, { mono: true, color: col.ochre });
+  q.line(spec.f, spec.pw.map(v => v / mx), { color: col.accent, w: 1.6 });
+  const k = spec.pw.indexOf(mx);
+  P.readout('eeg', `spectral peak at ${spec.f[k].toFixed(1)} Hz`);
+}
+P.slider({ label: 'Input noise', min: 0, max: 400, step: 5, value: sig, fmt: v => v + ' s⁻¹', on: v => { sig = v; } });
+P.slider({ label: 'Excitatory gain A (B fixed)', min: 2.4, max: 4.8, step: .05, value: A, fmt: v => 'A/B = ' + (v / JR.B).toFixed(3), on: v => { A = v; drawDia(); } });
+step(2); spectrum();
+P.onDraw(drawDia); drawDia();
+P.loop(sec => { step(sec); drawEEG(); });
+
+})();</script>
+</body></html>

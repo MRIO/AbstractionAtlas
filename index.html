@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Abstraction Atlas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Spectral+SC:wght@500&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: an engraved plate. On laptops abstraction runs left to right and the reading card slides over the right of the plate; on phones the plate runs top to bottom with the card beneath. Both prints are light by design: Plate (grey paper, black ink) and Cyanotype (light blue paper, deep blue ink). */
+:root {
+  --paper: #e4e6e3;
+  --ink: #191d24;
+  --ink-soft: #565d68;
+  --accent: #1d3b63;
+  --ochre: #94661c;
+  --rule: #191d2433;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .12 0 0 0 0 .16 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --f-display: "Spectral SC", "Cormorant SC", Georgia, serif;
+  --f-text: "Spectral", Georgia, "Times New Roman", serif;
+  --f-mono: "Courier Prime", "Courier New", ui-monospace, monospace;
+  color-scheme: light;
+}
+:root[data-print="cyan"] {
+  --paper: #c7dbec;
+  --ink: #0a2350;
+  --ink-soft: #2f4f7e;
+  --accent: #a2352a;
+  --ochre: #7f5512;
+  --rule: #0a235038;
+  --grain:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .04 0 0 0 0 .14 0 0 0 0 .34 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.00625' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .05 0 0 0 0 .2 0 0 0 0 .48 0 0 0 .8 -.33'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  background-color: var(--paper); background-image: var(--grain);
+  color: var(--ink);
+  font-family: var(--f-text);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+}
+.wrap { max-width: 1480px; margin: 0 auto; display: grid; gap: 16px; }
+
+header.plate-head { position: relative; border-bottom: 1px solid var(--ink); padding-bottom: 12px; }
+.titlebtn { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; display: inline-flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.titlebtn:hover, .titlebtn[aria-expanded="true"] { color: var(--accent); }
+.subtitle { font-family: var(--f-text); font-style: italic; font-size: clamp(17px, 2vw, 22px); color: var(--ink-soft); margin-top: 2px; }
+.titlebtn .hint { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); border-bottom: 1px solid var(--rule); }
+.preface-box { position: absolute; z-index: 20; top: calc(100% - 4px); left: 0; width: min(760px, 100%); background-color: var(--paper); background-image: var(--grain); border: 1px solid var(--ink); outline: 1px solid var(--rule); outline-offset: -5px; padding: 20px 24px 18px; display: grid; gap: 12px; }
+.preface-box[hidden] { display: none; }
+.preface-box .panel-top h2 { font-family: var(--f-display); font-weight: 500; font-size: 22px; margin: 0; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+h1 { font-family: var(--f-display); font-weight: 500; font-size: clamp(32px, 4.6vw, 54px); line-height: 1; letter-spacing: .02em; margin: 6px 0 0; text-wrap: balance; }
+.preface { margin: 0; padding: 0; list-style: none; font-size: 15.5px; line-height: 1.5; display: grid; gap: 8px; }
+.preface li { padding-left: 16px; position: relative; }
+.preface li::before { content: "§"; position: absolute; left: 0; color: var(--ink-soft); font-size: 12px; top: 2px; }
+.preface b { font-weight: 600; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; font-family: var(--f-mono); font-size: 12px; color: var(--ink-soft); }
+.seg { display: inline-flex; border: 1px solid var(--ink); background: var(--paper); }
+.seg button { font: inherit; font-family: var(--f-mono); font-size: 12px; background: transparent; color: var(--ink); border: 0; padding: 5px 12px; cursor: pointer; letter-spacing: .04em; }
+.seg button + button { border-left: 1px solid var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+button:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; }
+.legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.howto { font: inherit; background: none; border: 0; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; padding: 0; }
+
+.mapframe { position: relative; border: 1px solid var(--ink); padding: 5px; }
+.mapframe::before { content: ""; position: absolute; inset: 3px; border: 1px solid var(--rule); pointer-events: none; }
+.mapbox { position: relative; width: 100%; overflow: hidden; }
+.mapbox.pannable { cursor: grab; touch-action: none; }
+.mapbox.dragging { cursor: grabbing; }
+#map { width: 100%; height: 100%; display: block; user-select: none; -webkit-user-select: none; }
+.plate-no { position: absolute; right: 14px; top: 12px; font-family: var(--f-mono); font-size: 11px; color: var(--ink-soft); letter-spacing: .06em; pointer-events: none; }
+.zoomctl { position: absolute; top: 10px; left: 10px; }
+
+/* map drawing */
+.node:focus, .lens:focus, .edge path.hit:focus { outline: none; }
+.node:focus-visible .ring { opacity: 1; }
+.lens:focus-visible text { fill: var(--accent); }
+.edge path.stroke { fill: none; stroke: var(--ink); }
+.edge.spine path.stroke { stroke-width: 1.7; }
+.edge.branch path.stroke { stroke-width: 1.1; }
+.edge.compose path.stroke { stroke-width: 4.6; }
+.edge.compose path.inner { fill: none; stroke: var(--paper); stroke-width: 1.8; }
+.edge.mod { display: none; }
+.edge.mod.show { display: inline; }
+.edge.mod path.stroke { stroke: var(--ochre); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.edge path.hit { fill: none; stroke: transparent; stroke-width: 16; cursor: pointer; }
+.edge:hover path.stroke { stroke: var(--accent); }
+.edge.mod:hover path.stroke { stroke: var(--ochre); }
+.pulse { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; pointer-events: none; }
+.mod-pulse { stroke: var(--ochre); }
+.op { font-family: var(--f-text); font-style: italic; font-size: 12px; fill: var(--ink-soft); opacity: 0; transition: opacity .3s; pointer-events: none; }
+svg.zoomed .op, .op.hot { opacity: 1; }
+.node { cursor: pointer; }
+.node circle.dot { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5; }
+.node.spine circle.dot { fill: var(--ink); }
+.node.mod circle.dot { stroke: var(--ochre); stroke-dasharray: 2.5 2; }
+.node .ring { fill: none; stroke: var(--accent); stroke-width: 1.3; opacity: 0; }
+.node.sel .ring { opacity: 1; }
+.hit { fill: transparent; }
+.node text.name { font-family: var(--f-display); font-size: 15.5px; fill: var(--ink); }
+.node.branch text.name, .node.mod text.name { font-size: 14px; }
+.node text.scale { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink-soft); }
+.node text.ph { font-family: var(--f-mono); font-size: 9.5px; fill: var(--ink-soft); letter-spacing: .05em; }
+.node:hover text.name, .node.sel text.name { fill: var(--accent); }
+.here-tag { font-family: var(--f-mono); font-size: 10.5px; fill: var(--accent); letter-spacing: .08em; opacity: 0; }
+.node.here .here-tag { opacity: 1; }
+.lens path.bracket, .lens line { fill: none; stroke: var(--ink); stroke-width: 1.1; }
+.lens text { font-family: var(--f-display); font-size: 14.5px; fill: var(--ink); letter-spacing: .14em; }
+.lens { cursor: pointer; }
+.lens:hover text, .lens.sel text { fill: var(--accent); }
+.band-label { font-family: var(--f-mono); font-size: 11px; fill: var(--ink-soft); letter-spacing: .1em; }
+.band-rule { stroke: var(--rule); stroke-width: 1; }
+.el { transition: opacity .3s; }
+svg.has-sel .el:not(.on) { opacity: .16; }
+
+/* reading card */
+aside.panel { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.panel-top { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.closer { font-family: var(--f-mono); font-size: 18px; line-height: 1; background: none; border: 1px solid var(--rule); color: var(--ink); width: 30px; height: 30px; cursor: pointer; flex: none; }
+.closer:hover { border-color: var(--ink); }
+.kicker { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.panel h2 { font-family: var(--f-display); font-weight: 500; font-size: 25px; line-height: 1.12; margin: 4px 0 0; text-wrap: balance; }
+.panel h3 { font-family: var(--f-mono); font-weight: 400; font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 6px; }
+.panel ul.bul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 15px; }
+.panel p { margin: 0; font-size: 15px; }
+figure.fig { margin: 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 8px 0; display: flex; align-items: center; gap: 8px; }
+figure.fig.pair .glyph { max-width: 46%; }
+figure.fig .to { font-family: var(--f-mono); color: var(--ink-soft); }
+.glyph { width: 100%; max-width: 300px; height: auto; display: block; color: var(--ink); fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.glyph text { fill: var(--ink-soft); stroke: none; font-family: var(--f-mono); font-size: 9px; }
+.glyph .f { fill: currentColor; }
+.glyph .p { fill: var(--paper); }
+.glyph .a { stroke: var(--accent); }
+.glyph .af { fill: var(--accent); stroke: none; }
+.glyph .o { stroke: var(--ochre); }
+.glyph .of { fill: var(--ochre); stroke: none; }
+.glyph .ow { fill: var(--ochre); stroke: none; opacity: .18; }
+.glyph .d { stroke-dasharray: 3 3; }
+.glyph .t { stroke-width: .8; opacity: .55; }
+.glyph .n { stroke: none; }
+.foot { font-size: 13.5px; color: var(--ink-soft); border-top: 1px solid var(--rule); padding-top: 8px; }
+.fields { display: grid; gap: 9px; margin: 0; }
+.fields div { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 10px; border-bottom: 1px solid var(--rule); padding-bottom: 8px; }
+.fields dt { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); padding-top: 3px; }
+.fields dd { margin: 0; font-size: 15px; }
+.fields .ask dd { font-style: italic; }
+.path-row { font-family: var(--f-mono); font-size: 12.5px; color: var(--ink-soft); }
+.moves { display: grid; gap: 6px; }
+.move { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px; align-items: baseline; text-align: left; font: inherit; background: transparent; color: var(--ink); border: 1px solid var(--rule); padding: 7px 10px; cursor: pointer; }
+.move:hover { border-color: var(--ink); }
+.move .dir { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+.move .what { font-size: 14.5px; }
+.move .what i { color: var(--ink-soft); }
+.ex { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ex li { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; border-bottom: 1px dotted var(--rule); padding-bottom: 5px; font-size: 15px; }
+.ex a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.ex .st { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; }
+.ex .ph { color: var(--ink-soft); font-style: italic; }
+.g { font-size: 13px; }
+.g-est { color: var(--ink); } .g-lik { color: var(--accent); } .g-unv { color: var(--ochre); }
+.orig { font-size: 14px; display: flex; gap: 8px; }
+.note { font-size: 14px; color: var(--ink-soft); }
+.linkbtn { font: inherit; font-family: var(--f-mono); font-size: 12px; background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 3px; justify-self: start; }
+.stat { font-family: var(--f-mono); font-size: 12px; color: var(--ink-soft); }
+.glyph-key { display: grid; gap: 4px; font-size: 14px; }
+
+.panel details.box { border-top: 1px solid var(--rule); }
+.panel details.box summary { cursor: pointer; list-style: none; padding: 8px 0; font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); display: flex; justify-content: space-between; gap: 8px; }
+.panel details.box summary::-webkit-details-marker { display: none; }
+.panel details.box summary::after { content: "+"; font-size: 14px; }
+.panel details.box[open] summary::after { content: "−"; }
+.panel .eqbox { font-family: var(--f-text); font-size: 15px; line-height: 1.65; overflow-x: auto; padding-bottom: 10px; display: grid; gap: 2px; }
+.panel .eqbox div { white-space: nowrap; }
+.panel .eqbox .note { white-space: normal; font-size: 13.5px; color: var(--ink-soft); }
+.panel pre.pseudo { font-family: var(--f-mono); font-size: 12px; line-height: 1.55; white-space: pre-wrap; margin: 0 0 10px; }
+.ex.plates a { font-weight: 600; }
+aside.panel { grid-template-columns: minmax(0, 1fr); }
+aside.panel > * { min-width: 0; }
+/* laptop: card slides over the right of the plate */
+@media (min-width: 761px) {
+  aside.panel { position: absolute; top: 5px; right: 5px; bottom: 5px; width: min(390px, 44%); overflow: auto; background-color: var(--paper); background-image: var(--grain); border-left: 1px solid var(--ink); padding: 16px 20px 20px; transform: translateX(0); transition: transform .45s cubic-bezier(.3,.7,.2,1), opacity .3s; }
+  aside.panel.closed { transform: translateX(calc(100% + 8px)); opacity: 0; pointer-events: none; visibility: hidden; transition: transform .45s cubic-bezier(.3,.7,.2,1), opacity .3s, visibility 0s .45s; }
+  .mapframe { overflow: hidden; }
+}
+/* phone: plate runs vertically, card beneath */
+@media (max-width: 760px) {
+  .preface-box { padding: 16px; }
+  aside.panel { border-top: 3px double var(--ink); margin-top: 12px; padding: 14px 4px 0; }
+  .zoomctl, .howto { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .el, .op, aside.panel { transition: none !important; } }
+</style>
+<style>body{margin:0}[hidden]{display:none!important}</style></head><body>
+
+
+<div class="wrap">
+  <header class="plate-head">
+    <div class="eyebrow">NeuroAI Explainers · Plate I · Version 4</div>
+    <h1><button type="button" class="titlebtn" id="titlebtn" aria-expanded="false" aria-controls="preface-box">The Abstraction Atlas<span class="hint">§ Preface</span></button></h1>
+    <div class="subtitle">for computational neuroscience</div>
+    <div class="preface-box" id="preface-box" hidden>
+    <div class="panel-top"><div><div class="kicker">Preface</div><h2>Why this atlas exists</h2></div><button type="button" class="closer" id="preface-close" aria-label="Close preface">×</button></div>
+    <ul class="preface">
+      <li><b>The Abstraction Atlas</b> charts the principal simplifications by which computational neuroscience has learned to describe neural tissue, from ion channels to networks of areas, together with the passages that connect them.</li>
+      <li>Its skeleton is settled and largely perennial knowledge; like elementary algebra, refined over centuries, its essentials have withstood decades of scrutiny and are unlikely to change, and therefore reward being owned thoroughly.</li>
+      <li>Each model on the map is a deliberate omission, and each edge records what a simplification retains, what it forfeits, and the conditions under which its conclusions remain trustworthy.</li>
+      <li>Enter at whichever node you happen to arrive, then move inward towards detail or outward towards parsimony, following the dashed links wherever plasticity, modulation or noise alter the picture.</li>
+      <li>Fluency across these levels is the common inheritance of anyone who thinks seriously about brains, and the surest safeguard against mistaking a model for the tissue it describes.</li>
+    </ul>
+    </div>
+  </header>
+
+  <div class="controls">
+    <span>Print</span>
+    <div class="seg" role="group" aria-label="Print">
+      <button type="button" id="p-plate" aria-pressed="true">Plate</button>
+      <button type="button" id="p-cyan" aria-pressed="false">Cyanotype</button>
+    </div>
+    <div class="legend" aria-label="Legend">
+      <span><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--ink)" stroke-width="1.7"/></svg>simplification</span>
+      <span><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--ink)" stroke-width="4.6"/><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--paper)" stroke-width="1.8"/></svg>composition</span>
+      <span><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--ink)" stroke-width="1.1"/></svg>side branch</span>
+      <span><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--ochre)" stroke-width="1.3" stroke-dasharray="5 4"/></svg>modulator, shown on selection</span>
+      <span><span class="g g-est">●</span> established <span class="g g-lik">◐</span> likely <span class="g g-unv">○</span> unverified <span>†</span> disputed</span>
+    </div>
+    <button type="button" class="howto" id="howto">How to read the plate</button>
+  </div>
+
+  <div class="mapframe" id="mapframe">
+    <div class="mapbox" id="mapbox">
+      <svg id="map" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Map of simplifications in computational neuroscience">
+        <g class="lines" id="layer"></g>
+      </svg>
+      <div class="seg zoomctl" role="group" aria-label="Magnification">
+        <button type="button" id="z-over" aria-pressed="true">Overview</button>
+        <button type="button" id="z-detail" aria-pressed="false">Detail</button>
+      </div>
+      <div class="plate-no" id="plateno"></div>
+    </div>
+    <aside class="panel closed" id="panel" aria-live="polite"></aside>
+  </div>
+</div>
+
+<script>
+(function () {
+  /* ---------- data ---------- */
+  const B = 'https://mrio.github.io/NeuroAI_explainers/';
+  const ex = (t, p) => ({ t, u: B + encodeURI(p) });
+  const planned = t => ({ t, planned: true });
+  const coming = t => ({ t, coming: true });
+
+  const N = [
+    { id: 'ion-channels', kind: 'spine', name: 'Ion Channels and Synapses', scale: '≈ 10 nm · μs to ms',
+      b: ['Membrane proteins open and close stochastically, gating currents of specific ions.',
+          'Synapses convert a presynaptic spike into a brief conductance change in the postsynaptic membrane.',
+          'The most detailed level on this map; every level after it averages over many such events.'],
+      ex: [planned('Single channel gating and channel noise')] },
+    { id: 'compartmental', kind: 'spine', name: 'Compartmental Neuron', scale: '≈ 0.1 to 1 mm · ms',
+      b: ['The cell is divided into electrically coupled compartments that follow its dendritic and axonal shape.',
+          'Each compartment carries its own membrane currents, so the position of a synapse changes its effect.',
+          'Cable theory describes how voltage spreads and attenuates along the branches.'],
+      ex: [planned('Dendritic integration on a branching cable')] },
+    { id: 'conductance-point', kind: 'spine', name: 'Conductance-Based Point Neuron', scale: 'one cell · 0.1 ms',
+      b: ['The whole cell becomes one isopotential compartment with voltage-dependent conductances.',
+          'Spikes arise from the interplay of fast sodium activation with slower sodium inactivation and potassium activation.',
+          'Four or more coupled differential equations describe a single cell.'],
+      foot: 'Hodgkin and Huxley (1952) established this formalism on the squid giant axon, work recognised with the Nobel Prize in 1963.',
+      ex: [planned('Conductance-based spike generation')] },
+    { id: 'reduced', kind: 'spine', name: 'Reduced Neuron Models', scale: 'one cell · ms',
+      b: ['A fast voltage and a slow recovery variable stand in for the full set of gating variables.',
+          'The dynamics can be drawn entirely in a phase plane, with nullclines, fixed points and limit cycles.',
+          'Different classes of excitability appear as different geometries of that plane.'],
+      foot: 'FitzHugh–Nagumo, Morris–Lecar, Izhikevich and the adaptive exponential (AdEx) model belong here.',
+      ex: [ex('Adaptive Exponential Spiking Neuron Phase Space', 'Spiking Neuron (AdEx)/adex_phase_space_v5.html')] },
+    { id: 'integrate-and-fire', kind: 'spine', name: 'Integrate-and-Fire Neuron', scale: 'one cell · ms',
+      b: ['The membrane integrates input current as a leaky capacitor until it reaches a threshold.',
+          'At threshold a spike is registered and the voltage is reset; the shape of the spike is never computed.',
+          'Cheap enough to simulate in networks of many thousands of cells.'],
+      ex: [ex('Shishi-odoshi Leaky Integrate-and-Fire Neuron', 'LIF neuron shishi-odoshi/index.html')] },
+    { id: 'spiking-network', kind: 'spine', name: 'Spiking Network', scale: '10³ to 10⁵ cells · ms',
+      b: ['Integrate-and-fire or reduced neurons coupled by synapses, usually split into excitatory and inhibitory populations.',
+          'Collective states emerge that no single cell displays: asynchronous irregular firing, synchrony and oscillations.',
+          'Results depend on the statistics of the wiring as much as on the neuron model.'],
+      ex: [ex('E-I Balanced LIF Network', 'E-I Networks/index.html'), ex('E-I Balanced Network, standalone', 'E-I Networks/E-I_balanced_network.html')] },
+    { id: 'rate-population', kind: 'spine', name: 'Rate Population Model', scale: 'one population · ≈ 10 ms',
+      b: ['Each population is described by a single firing rate that evolves in time.',
+          'A sigmoid or similar gain function links input to rate.',
+          'Small systems of equations whose fixed points and oscillations can be analysed by hand.'],
+      foot: 'Wilson and Cowan (1972).',
+      ex: [ex('Two Neuron Recurrent Dynamics', 'Two Neuron Recurrent Dynamics/two_neuron_dynamics_simulator.html')] },
+    { id: 'laminar-column', kind: 'spine', name: 'Laminar Column Model', scale: '≈ 0.5 mm across, 2 mm deep',
+      b: ['Rate populations are assigned to cortical layers and cell classes, with directed pathways between them.',
+          'Feedforward input, processing within the column and feedback targets become separable.',
+          'Allows one to ask which layer projects where, within the column and towards other areas.'],
+      ex: [ex('Multilayer Tanh/Sigmoid Stack', 'Multi Layer Meanfield Network/meanfield_layers_demo/index.html'), ex('Multilayer Tanh Stack V6', 'Multi Layer Meanfield Network/multi_layer_tanh_v6.html')] },
+    { id: 'neural-mass', kind: 'spine', name: 'Neural Mass Model', scale: 'one column · 10 to 100 ms',
+      b: ['A whole column is lumped into a few interacting populations, typically pyramidal cells with excitatory and inhibitory interneurons.',
+          'Synaptic kernels and a sigmoid produce rhythms resembling those recorded in the EEG.',
+          'The standard building block of whole-brain simulations.'],
+      foot: 'Lopes da Silva et al. (1974); Jansen and Rit (1995).',
+      ex: [planned('Jansen–Rit column and its rhythms')] },
+    { id: 'neural-field', kind: 'spine', name: 'Neural Field', scale: 'cm of cortex · 10 to 100 ms',
+      b: ['Cortex is treated as a continuous sheet, with activity defined at every point.',
+          'Connectivity becomes a kernel that depends on distance, and the model becomes an integro-differential equation in space and time.',
+          'Supports travelling waves, stationary bumps and spatial patterns.'],
+      ex: [ex('Neural-Grid Experiments', 'Multi Layer Meanfield Network/tanh_grid_v5.html')] },
+    { id: 'large-scale', kind: 'spine', name: 'Large-Scale Network Model', scale: 'whole brain · 0.1 to 10 s',
+      b: ['Each brain area becomes one node, usually a neural mass, coupled through a measured connectome.',
+          'Distances between areas introduce conduction delays.',
+          'Used to relate anatomical structure to functional connectivity and to whole-brain signals.'],
+      ex: [planned('Whole-brain model on a connectome')] },
+
+    { id: 'artificial-network', kind: 'branch', name: ['Artificial', 'Neural Network'], H: [830, 520], V: [262, 725],
+      b: ['Units compute a weighted sum of their inputs passed through a threshold or another nonlinearity, without explicit time or spikes.',
+          'Weights are set by hand or learned from data, usually by gradient descent.',
+          'A tool for asking what a representation could compute, at scales no biophysical model reaches.'],
+      foot: 'The McCulloch–Pitts threshold unit (1943) is the simplest member of this family.',
+      ex: [ex('DIY Receptive Field', 'Receptive Field explainer/receptive_field_explainer.html'), ex('LGN ON/OFF Center-Surround Cells', 'LGN_on_off_cells/lgn_on_off_center_surround.html'), ex('Reichardt–Hassenstein Motion Detector', 'motion_detector/reichardt-hassenstein-explainer.html'), ex('Feedforward Neural Networks', 'FFNN explainer/FFNN_explainer.html'), ex('Echo State Decoder: Figure-Eight Arm', 'Echo State Decoder/index.html'), ex('Through the Keyhole: Autoencoders', 'Autoencoder/autoencoder_explainer.html'), coming('The Matching Law and the Perceptron')] },
+    { id: 'attractor-network', kind: 'branch', name: ['Attractor', 'Network'], H: [640, 450], V: [262, 625],
+      b: ['Binary or rate units with recurrent, often symmetric, weights.',
+          'Stored patterns become stable states, so a partial cue settles into the full memory.',
+          'An energy function makes capacity and retrieval analysable.'],
+      foot: 'Hopfield (1982).',
+      ex: [planned('Hopfield network and pattern completion')] },
+    { id: 'phase-oscillator', kind: 'branch', name: ['Phase Oscillator', 'Model'], H: [1040, 450], V: [262, 925],
+      b: ['Each oscillating population is reduced to a single phase on a circle.',
+          'Coupling functions decide whether oscillators synchronise, lock or drift.',
+          'Central to questions about synchrony and coherence between areas.'],
+      foot: 'Winfree (1967); Kuramoto (1975).',
+      ex: [planned('Kuramoto synchronisation')] },
+    { id: 'connectivity-graph', kind: 'branch', name: ['Connectivity', 'Graph'], H: [1230, 520], V: [262, 1125],
+      b: ['Neurons or areas become vertices; synapses or tracts become edges.',
+          'Degree, motifs, modules and path lengths describe structure without any dynamics.',
+          'Constrains every model on the map that needs wiring.'],
+      ex: [ex('Network Propagation', 'Network Propagation Demo/propagation_examples.html')] },
+    { id: 'forward-model', kind: 'branch', name: ['Forward Model', 'of Measurement'], H: [1405, 450], V: [262, 1195],
+      b: ['Maps simulated activity onto what an instrument records: LFP, EEG, MEG or fMRI.',
+          'Each modality is blind to some activity, for example currents whose fields cancel at the sensor.',
+          'The bridge required to test any model on this map against data.'],
+      ex: [planned('From population activity to EEG and BOLD')] },
+
+    { id: 'dynamical-systems', kind: 'lens', name: 'Dynamical Systems Analysis',
+      b: ['A way of reading every model on the map: state space, fixed points, stability, bifurcations, limit cycles and chaos.',
+          'The same questions apply to the gating of a channel, a single neuron and a whole-brain model.',
+          'Often decides whether a simplification is acceptable, since a good reduction preserves the structure of bifurcations.'],
+      ex: [ex('Vector Field Studio', 'Vector Field Studio/vector-field-studio.html'), ex('RNN Eigenspace Explorer', 'RNN eigen explorer/rnn_eigen_explorer.html'), ex('Small RNN Eigenspace Explorer', 'small RNN eigenspace explorer/index.html'), coming('Return Maps of Random Recurrent Networks')] },
+
+    { id: 'long-term-plasticity', kind: 'mod', name: ['Long-Term', 'Plasticity'], H: [110, 635], V: [46, 1320], targets: ['spiking-network', 'rate-population', 'artificial-network', 'attractor-network'],
+      b: ['Weights change slowly with correlated activity, as in Hebbian learning, spike-timing-dependent plasticity and reward-modulated rules.',
+          'Alters the edges of a network while the dynamics of its nodes stay fixed.'],
+      ex: [ex("Stabilizing Hebbian Learning: Oja's Rule", 'Stabilizing Hebbian Learning/oja_rule.html')] },
+    { id: 'short-term-plasticity', kind: 'mod', name: ['Short-Term', 'Plasticity'], H: [368, 635], V: [240, 1320], targets: ['ion-channels', 'spiking-network', 'neural-mass'],
+      b: ['Synaptic efficacy facilitates or depresses over tens to hundreds of milliseconds.',
+          'Turns fixed weights into dynamical variables with time constants of their own.'],
+      foot: 'Tsodyks and Markram (1997).',
+      ex: [planned('Facilitating and depressing synapses')] },
+    { id: 'neuromodulation', kind: 'mod', name: ['Neuro-', 'modulation'], H: [626, 635], V: [46, 1380], targets: ['conductance-point', 'rate-population', 'neural-mass'],
+      b: ['Acetylcholine, dopamine, noradrenaline and serotonin alter gains, thresholds and synaptic strengths, often by diffusing from release sites rather than acting at a single synapse.',
+          'The same circuit can thereby run in several distinct operating regimes.'],
+      ex: [planned('Gain modulation of a population')] },
+    { id: 'oscillatory-gating', kind: 'mod', name: ['Oscillatory', 'Gating'], H: [884, 635], V: [240, 1380], targets: ['spiking-network', 'neural-mass', 'phase-oscillator'],
+      b: ['Rhythms open and close windows of time in which input is effective.',
+          'Rate and mass models capture the rhythm itself; whether a spike lands at the right phase of the cycle is resolved only at the spiking level.'],
+      ex: [planned('Communication through coherence')] },
+    { id: 'homeostatic-regulation', kind: 'mod', name: ['Homeostatic', 'Regulation'], H: [1142, 635], V: [46, 1440], targets: ['integrate-and-fire', 'spiking-network', 'rate-population'],
+      b: ['Slow processes keep firing rates within a target range by scaling synapses or adjusting excitability.',
+          'Stabilises learning rules that would otherwise run away.'],
+      ex: [planned('Synaptic scaling')] },
+    { id: 'noise-variability', kind: 'mod', name: ['Noise and', 'Variability'], H: [1400, 635], V: [240, 1440], targets: ['ion-channels', 'spiking-network', 'rate-population', 'neural-field'],
+      b: ['Channel noise, synaptic failures and irregular input make activity variable from trial to trial.',
+          'Depending on the circumstances it degrades a signal, helps detect a weak one, or drives transitions between states.'],
+      ex: [planned('Stochastic resonance')] }
+  ];
+
+  const E = [
+    { id: 'channel-averaging', kind: 'spine', from: 'ion-channels', to: 'compartmental', op: 'channel averaging',
+      keeps: 'Macroscopic conductances and their dependence on voltage.', loses: 'The stochastic opening and closing of individual channels.',
+      trust: 'Each patch of membrane holds many channels.', ask: 'In a very thin axon with few sodium channels, which event could occur that the deterministic model can never produce?',
+      orig: 'Neher and Sakmann (1976) for single-channel recordings; the first formal statement of the deterministic limit is not yet attributed.', conf: 'unv' },
+    { id: 'spatial-collapse', kind: 'spine', from: 'compartmental', to: 'conductance-point', op: 'spatial collapse',
+      keeps: 'Spike generation, intrinsic currents and the excitability of the cell.', loses: 'Dendritic integration, the location of synapses, backpropagating and dendritic spikes.',
+      trust: 'The cell is electrotonically compact, or the inputs of interest arrive close to the soma.', ask: 'Two identical synapses, one distal and one at the soma: what does the point neuron predict about their effects, and what does the cable predict?',
+      orig: 'Rall, cable theory and the equivalent cylinder, about 1959 to the late 1960s.', conf: 'lik' },
+    { id: 'dimensional-reduction', kind: 'spine', from: 'conductance-point', to: 'reduced', op: 'dimensional reduction',
+      keeps: 'Threshold behaviour, class of excitability and the qualitative shape of the phase portrait.', loses: 'The identity of specific channels, exact waveforms and anything pharmacological.',
+      trust: 'Fast and slow timescales separate cleanly.', ask: 'Why can a model with two variables be drawn completely in a plane, and what does that let you see which four variables hide?',
+      orig: 'FitzHugh (1961); Nagumo et al. (1962); Morris and Lecar (1981); Izhikevich (2003).', conf: 'est' },
+    { id: 'spike-abstraction', kind: 'spine', from: 'reduced', to: 'integrate-and-fire', op: 'spike abstraction',
+      keeps: 'The integration of input and the timing of output spikes.', loses: 'Spike shape, the mechanism that generates it, and subthreshold resonance in the plain leaky model.',
+      trust: 'Input varies slowly compared with the width of a spike.', ask: 'What does a perfectly sharp threshold assume about how a real cell begins to spike?',
+      orig: 'Lapicque (1907); repetitive firing with an explicit reset and the name itself came later, through Stein (1965) and Knight (1972); see Brunel and van Rossum (2007).', conf: 'lik', disputed: true,
+      note: 'Once in place, the reset looked too natural to need stating, yet writing it down turned a model of nerve excitability into a model of a neuron that fires again and again.' },
+    { id: 'synaptic-coupling', kind: 'compose', from: 'integrate-and-fire', to: 'spiking-network', op: 'synaptic coupling',
+      keeps: 'Every property of the single neuron model.', loses: 'Analytical simplicity; every result now depends on the statistics of the wiring.',
+      trust: 'The connectivity statistics resemble those of the tissue in question.', ask: 'Which properties of the network could you predict from one neuron alone, and which appear only once neurons are coupled?',
+      orig: 'No single originator; van Vreeswijk and Sompolinsky (1996) and Brunel (2000) are the canonical network studies.', conf: 'lik',
+      note: 'A composition: this step builds a larger system out of the level before it, with nothing taken away from the neuron.' },
+    { id: 'population-averaging', kind: 'spine', from: 'spiking-network', to: 'rate-population', op: 'population averaging',
+      keeps: 'Slow, population-wide dynamics: fixed points, oscillations and bifurcations.', loses: 'Spike timing, synchrony between cells and the noise of finite populations.',
+      trust: 'Populations are large and their firing is asynchronous.', ask: 'Which result of the mean-field model would you expect to break in a network of only 50 neurons, and why?',
+      orig: 'Wilson and Cowan (1972); Amit and Brunel (1997) for the derivation from spiking networks.', conf: 'lik' },
+    { id: 'laminar-grouping', kind: 'spine', from: 'rate-population', to: 'laminar-column', op: 'laminar grouping',
+      keeps: 'Separate populations for each layer and cell class, and the directed pathways between them.', loses: 'Heterogeneity within a layer, and dendrites that span several layers.',
+      trust: 'Connection strengths between layers are well measured.', ask: 'If layer 4 is silenced, which pathway in the model still carries input upward, and would the tissue agree?',
+      orig: 'Douglas and Martin (1989), the canonical microcircuit; Potjans and Diesmann (2014).', conf: 'unv' },
+    { id: 'laminar-lumping', kind: 'spine', from: 'laminar-column', to: 'neural-mass', op: 'laminar lumping',
+      keeps: 'The loop between excitation and inhibition, its rhythms, and an output that resembles the EEG.', loses: 'Pathways specific to layers, and with them the distinction between feedforward and feedback targets.',
+      trust: 'The signal of interest is an aggregate over the whole column.', ask: 'A Jansen–Rit column produces an alpha rhythm. Which layer generated it, and what can the model tell you about that?',
+      orig: 'Lopes da Silva et al. (1974); Jansen and Rit (1995).', conf: 'lik' },
+    { id: 'continuum-limit', kind: 'spine', from: 'neural-mass', to: 'neural-field', op: 'continuum limit',
+      keeps: 'Spatial interactions, now expressed as a connectivity kernel.', loses: 'The discreteness of columns and the specific pattern of long-range wiring.',
+      trust: 'Connectivity is local and roughly the same everywhere on the sheet.', ask: 'Why does a neural field so readily produce travelling waves, and what kind of connectivity would prevent them?',
+      orig: 'Wilson and Cowan (1973); Amari (1977).', conf: 'est' },
+    { id: 'areal-parcellation', kind: 'spine', from: 'neural-field', to: 'large-scale', op: 'areal parcellation',
+      keeps: 'The long-range connectome and the delays between areas.', loses: 'All spatial structure within an area.',
+      trust: 'Each area is functionally homogeneous at the scale of the question.', ask: 'How much would your conclusions change under a different parcellation of the same cortex?',
+      orig: 'Honey et al. (2007) through The Virtual Brain (Sanz Leon et al., 2013); priority is unclear.', conf: 'unv' },
+
+    { id: 'unit-abstraction', kind: 'branch', from: 'rate-population', to: 'artificial-network', op: 'abstraction to units',
+      keeps: 'A weighted sum followed by a threshold or another nonlinearity.', loses: 'Time, the separation of excitation and inhibition, and Dale\'s law.',
+      trust: 'The question concerns what a representation can compute, with mechanism set aside.', ask: 'Which property of an artificial network would change if every unit had to be either excitatory or inhibitory?',
+      orig: 'McCulloch and Pitts (1943); Rosenblatt (1958); Rumelhart, Hinton and Williams (1986).', conf: 'est' },
+    { id: 'binarisation', kind: 'branch', from: 'spiking-network', to: 'attractor-network', op: 'binary units, symmetric weights',
+      keeps: 'Stable patterns of activity and the completion of partial patterns.', loses: 'Time course, spike timing and asymmetric wiring.',
+      trust: 'The number of stored memories is small compared with the size of the network.', ask: 'Real synapses are rarely symmetric. Which property of the Hopfield network depends on symmetry?',
+      orig: 'Hopfield (1982); Amit, Gutfreund and Sompolinsky (1985).', conf: 'est' },
+    { id: 'phase-reduction', kind: 'branch', from: 'neural-mass', to: 'phase-oscillator', op: 'phase reduction',
+      keeps: 'The phase of each oscillator and how coupling shifts it.', loses: 'Amplitude and waveform.',
+      trust: 'Coupling is weak and each population sits on a stable limit cycle.', ask: 'Two coupled columns in a phase model lock in antiphase. What would you check in the full neural mass model before believing it?',
+      orig: 'Winfree (1967); Kuramoto (1975).', conf: 'est' },
+    { id: 'structure-as-graph', kind: 'branch', from: 'large-scale', to: 'connectivity-graph', op: 'structure as graph',
+      keeps: 'Topology: who connects to whom, and how strongly.', loses: 'All dynamics.',
+      trust: 'The question is structural, such as hubs, modules or path lengths.', ask: 'Two networks share the same graph. Can they behave differently, and what would make them do so?',
+      orig: 'Watts and Strogatz (1998); Sporns, Tononi and Kötter (2005).', conf: 'lik' },
+    { id: 'observation-model', kind: 'branch', from: 'large-scale', to: 'forward-model', op: 'observation model',
+      keeps: 'What a particular instrument is able to record.', loses: 'Everything that cancels or averages out before it reaches the sensor.',
+      trust: 'The physics of the measurement is well understood, as in EEG volume conduction or the haemodynamic response.', ask: 'Which activity in your model would be invisible to EEG, and why?',
+      orig: 'Buxton et al. (1998) for the balloon model; Friston et al. (2000); EEG forward modelling not yet attributed.', conf: 'unv' }
+  ];
+  N.filter(n => n.kind === 'mod').forEach(m => m.targets.forEach(t => E.push({ id: m.id + '--' + t, kind: 'mod', from: m.id, to: t })));
+
+  const PLATES = {"ion-channels": [{"n": "II", "f": "plates/02-stochastic-channel-gating.html", "t": "Stochastic Channel Gating", "eq": "<div>α(V) = k e<sup>(V − V<sub>½</sub>)/2s</sup>,&nbsp;&nbsp; β(V) = k e<sup>−(V − V<sub>½</sub>)/2s</sup></div>\n<div>P<sub>open</sub> = α/(α + β),&nbsp;&nbsp; τ = 1/(α + β)</div>\n<div>mean open time = 1/β,&nbsp;&nbsp; mean closed time = 1/α</div>\n<div>I = N<sub>open</sub> · γ · (V − E)</div>\n<div class=\"note\">Parameters: k = 0.1 ms⁻¹, V<sub>½</sub> = −40 mV, s = 8 mV, single-channel conductance γ = 10 pS, reversal potential E = +50 mV.</div>", "ps": "for each time step dt:\n    for each channel:\n        if closed: open with probability α(V)·dt\n        if open:   close with probability β(V)·dt\n                   (when it closes, record how long it was open)\n    I ← (number of open channels) · γ · (V − E)"}], "channel-averaging": [{"n": "III", "f": "plates/03-single-channel-to-macroscopic-conductance.html", "t": "From Single-Channel Currents to Macroscopic Conductance", "eq": "<div>dp/dt = α(V)(1 − p) − β(V) p</div>\n<div>p(t) = p<sub>∞</sub> + (p<sub>0</sub> − p<sub>∞</sub>) e<sup>−t/τ</sup>,&nbsp;&nbsp; p<sub>∞</sub> = α/(α + β),&nbsp;&nbsp; τ = 1/(α + β)</div>\n<div>Var[n<sub>open</sub>/N] = p(1 − p)/N,&nbsp;&nbsp; so the standard deviation falls as 1/√N</div>", "ps": "apply the voltage step at t = t_step\nfor each time step dt:\n    stochastic:    n_open ← n_open + Binomial(N − n_open, α·dt) − Binomial(n_open, β·dt)\n    deterministic: p ← p + dt · (α·(1 − p) − β·p)\nplot n_open/N and p on the same axes\nfluctuation size ← standard deviation of n_open/N after the relaxation"}], "compartmental": [{"n": "IV", "f": "plates/04-passive-cable-theory.html", "t": "Passive Cable Theory", "eq": "<div>τ ∂V/∂t = λ² ∂²V/∂x² − V + r<sub>m</sub> i<sub>syn</sub>(x, t)</div>\n<div>λ = √(r<sub>m</sub> / r<sub>i</sub>)</div>\n<div>steady state on a long cable: V(x) = V<sub>0</sub> e<sup>−x/λ</sup></div>\n<div class=\"note\">V is measured from rest. With compartments of length Δx, ∂²V/∂x² becomes (V<sub>k+1</sub> − 2V<sub>k</sub> + V<sub>k−1</sub>)/Δx². Cable length 1 mm, τ = 20 ms; both ends are sealed.</div>", "ps": "for each time step dt:\n    for each compartment k:\n        coupling ← (λ/Δx)² · (V[k+1] − 2·V[k] + V[k−1])\n        V[k] ← V[k] + dt/τ · (−V[k] + coupling + input[k])\n    (at a sealed end the missing neighbour takes the value V[k])\nrecord V at the synapse and at the soma"}], "spatial-collapse": [{"n": "V", "f": "plates/05-isopotential-approximation.html", "t": "The Isopotential Approximation", "eq": "<div>cable: τ ∂V/∂t = λ² ∂²V/∂x² − V + r<sub>m</sub> i<sub>syn</sub>(x, t)</div>\n<div>point neuron: τ dV/dt = −V + (1/N) Σ<sub>k</sub> r<sub>m</sub> i<sub>syn,k</sub>(t)</div>\n<div>electrotonic length L/λ;&nbsp;&nbsp; electrotonic distance of the synapse X = x/λ</div>\n<div class=\"note\">The point neuron has the total membrane of the N = 20 compartments, so a current that enters one compartment is spread over all of them.</div>", "ps": "run the cable with input at compartment k\nrun one compartment:  V ← V + dt/τ · (−V + input/N)\ncompare V_soma(t) of the cable with V(t) of the point neuron\nmismatch ← (peak_point − peak_cable) / peak_cable\nrepeat for every k to draw the mismatch curve"}], "conductance-point": [{"n": "VI", "f": "plates/06-conductance-based-neuron-model.html", "t": "Conductance-Based Neuron Model", "eq": "<div>C dV/dt = I − ḡ<sub>Na</sub> m³h (V − E<sub>Na</sub>) − ḡ<sub>K</sub> n⁴ (V − E<sub>K</sub>) − g<sub>L</sub> (V − E<sub>L</sub>)</div>\n<div>dx/dt = α<sub>x</sub>(V)(1 − x) − β<sub>x</sub>(V) x,&nbsp;&nbsp; x ∈ {m, h, n}</div>\n<div>x<sub>∞</sub> = α<sub>x</sub>/(α<sub>x</sub> + β<sub>x</sub>),&nbsp;&nbsp; τ<sub>x</sub> = 1/(α<sub>x</sub> + β<sub>x</sub>)</div>\n<div class=\"note\">Squid-axon parameters: C = 1 μF/cm², ḡ<sub>Na</sub> = 120, ḡ<sub>K</sub> = 36, g<sub>L</sub> = 0.3 mS/cm², E<sub>Na</sub> = 50, E<sub>K</sub> = −77, E<sub>L</sub> = −54.4 mV. The gate equation is the two-state equation of Stochastic Channel Gating, averaged over many channels.</div>", "ps": "for each time step dt:\n    for each gate x in (m, h, n):\n        x ← x + dt · (α_x(V)·(1 − x) − β_x(V)·x)\n    I_Na ← g_Na · m³ · h · (V − E_Na)      (zero if sodium is blocked)\n    I_K  ← g_K · n⁴ · (V − E_K)            (zero if potassium is blocked)\n    I_L  ← g_L · (V − E_L)\n    V ← V + dt/C · (I_inj − I_Na − I_K − I_L)"}], "dimensional-reduction": [{"n": "VII", "f": "plates/07-timescale-separation.html", "t": "Timescale Separation", "eq": "<div>stage 1: m → m<sub>∞</sub>(V)</div>\n<div>stage 2: h → 0.8 − n</div>\n<div>C dV/dt = I − ḡ<sub>Na</sub> m<sub>∞</sub>(V)³ (0.8 − n)(V − E<sub>Na</sub>) − ḡ<sub>K</sub> n⁴ (V − E<sub>K</sub>) − g<sub>L</sub> (V − E<sub>L</sub>)</div>\n<div>dn/dt = α<sub>n</sub>(V)(1 − n) − β<sub>n</sub>(V) n</div>", "ps": "full model:  update V, m, h and n\nstage 1:     m ← m∞(V) at every step;  update V, h and n\nstage 2:     m ← m∞(V);  h ← 0.8 − n;  update V and n\ncompare the voltage traces on the same current"}], "reduced": [{"n": "VIII", "f": "plates/08-phase-plane-analysis-of-excitability.html", "t": "Phase-Plane Analysis of Excitability", "eq": "<div>dv/dt = v − v³/3 − w + I</div>\n<div>dw/dt = ε (v + a − b w)</div>\n<div>v-nullcline: w = v − v³/3 + I;&nbsp;&nbsp; w-nullcline: w = (v + a)/b</div>\n<div class=\"note\">ε = 0.08, a = 0.7, b = 0.8. Repetitive firing begins near I ≈ 0.33.</div>", "ps": "choose a starting state (v, w)\nfor each time step dt:\n    v ← v + dt · (v − v³/3 − w + I)\n    w ← w + dt · ε · (v + a − b·w)\ndraw (v, w) in the plane, and v against time"}], "spike-abstraction": [{"n": "IX", "f": "plates/09-threshold-and-reset.html", "t": "Threshold and Reset", "eq": "<div>τ dV/dt = −(V − E<sub>L</sub>) + R I</div>\n<div>if V ≥ θ: record a spike and set V ← V<sub>reset</sub></div>\n<div class=\"note\">Integrate-and-fire parameters: τ = 8 ms, E<sub>L</sub> = −65 mV, θ = −55 mV, R = 1.5 mV per μA/cm², refractory period 5 ms. The two-variable model is stage 2 of Timescale Separation.</div>", "ps": "for each time step dt:\n    two-variable model: update V and n as in Timescale Separation\n    integrate-and-fire: V ← V + dt/τ · (−(V − E_L) + R·I)\n                        if V ≥ θ: draw a tick, V ← V_reset, hold for 5 ms\nfiring rate ← number of spikes / duration, for each current"}], "integrate-and-fire": [{"n": "X", "f": "plates/10-leaky-integrate-and-fire-neuron.html", "t": "Leaky Integrate-and-Fire Neuron", "eq": "<div>τ dV/dt = −(V − E<sub>L</sub>) + R I,&nbsp;&nbsp; τ = RC</div>\n<div>if V ≥ θ: spike, V ← V<sub>reset</sub></div>\n<div>rheobase: I<sub>rh</sub> = (θ − E<sub>L</sub>)/R</div>\n<div>interspike interval: T = τ ln[(RI − V<sub>reset</sub> + E<sub>L</sub>)/(RI − θ + E<sub>L</sub>)],&nbsp;&nbsp; for I &gt; I<sub>rh</sub></div>\n<div class=\"note\">E<sub>L</sub> = V<sub>reset</sub> = −70 mV, θ = −50 mV, R = 10 MΩ, so the rheobase is 2 nA.</div>", "ps": "for each time step dt:\n    V ← V + dt/τ · (−(V − E_L) + R·I)\n    if V ≥ θ:\n        record a spike\n        V ← V_reset"}], "synaptic-coupling": [{"n": "XI", "f": "plates/11-synaptic-coupling.html", "t": "Synaptic Coupling", "eq": "<div>τ<sub>s</sub> dI<sub>s</sub>/dt = −I<sub>s</sub> + τ<sub>s</sub> w<sub>12</sub> Σ<sub>k</sub> δ(t − t<sub>1</sub><sup>k</sup>)</div>\n<div>τ dV<sub>2</sub>/dt = −(V<sub>2</sub> − E<sub>L</sub>) + R (I<sub>2</sub> + I<sub>s</sub>)</div>\n<div class=\"note\">w<sub>12</sub> is the synapse from neuron 1 to neuron 2; t<sub>1</sub><sup>k</sup> are the spike times of neuron 1.</div>", "ps": "for each time step dt:\n    update neuron 1 (integrate-and-fire, constant drive)\n    if neuron 1 spikes: I_s ← I_s + w_12\n    I_s ← I_s − dt/τ_s · I_s\n    update neuron 2 with input I_2 + I_s"}], "spiking-network": [{"n": "XII", "f": "plates/12-balanced-excitatory-inhibitory-network.html", "t": "Balanced Excitatory–Inhibitory Network", "eq": "<div>τ dV<sub>j</sub>/dt = −V<sub>j</sub> + τ Σ<sub>i</sub> J<sub>ij</sub> Σ<sub>k</sub> δ(t − t<sub>i</sub><sup>k</sup> − D) + external Poisson input</div>\n<div>J<sub>ij</sub> = J for excitatory i,&nbsp;&nbsp; J<sub>ij</sub> = −gJ for inhibitory i</div>\n<div>if V<sub>j</sub> ≥ θ: spike, V<sub>j</sub> ← V<sub>r</sub>, refractory for τ<sub>ref</sub></div>\n<div class=\"note\">400 neurons (320 excitatory, 80 inhibitory), connection probability 0.1, J = 1 mV, θ = 20 mV, V<sub>r</sub> = 10 mV, τ = 20 ms, τ<sub>ref</sub> = 2 ms, delay D = 1.5 ms. External drive is given relative to the rate that would just bring a neuron to threshold.</div>", "ps": "for each time step dt:\n    for each neuron j:\n        V_j decays towards 0 and receives external Poisson kicks of size J\n        add the spikes arriving now from presynaptic neurons i:\n            +J for excitatory i,  −g·J for inhibitory i\n        if V_j ≥ θ: record a spike, V_j ← V_r, hold it for τ_ref\n    schedule this step's spikes to arrive after the delay D"}], "population-averaging": [{"n": "XIII", "f": "plates/13-mean-field-approximation.html", "t": "Mean-Field Approximation: From Spiking Networks to Rate Models", "eq": "<div>spiking: τ dV<sub>j</sub>/dt = −V<sub>j</sub> + μ(t) + σ √τ ξ<sub>j</sub>(t),&nbsp;&nbsp; spike and reset at θ</div>\n<div>μ<sub>E</sub> = μ<sub>ext</sub> + J<sub>EE</sub> s<sub>E</sub> − J<sub>IE</sub> s<sub>I</sub>,&nbsp;&nbsp; μ<sub>I</sub> = μ<sub>ext</sub> + J<sub>EI</sub> s<sub>E</sub> − J<sub>II</sub> s<sub>I</sub></div>\n<div>rate model: τ<sub>s</sub> ds<sub>E</sub>/dt = −s<sub>E</sub> + F(μ<sub>E</sub>, σ),&nbsp;&nbsp; τ<sub>s</sub> ds<sub>I</sub>/dt = −s<sub>I</sub> + F(μ<sub>I</sub>, σ)</div>\n<div>F(μ, σ) = [τ<sub>ref</sub> + τ √π ∫<sub>(V<sub>r</sub>−μ)/σ</sub><sup>(θ−μ)/σ</sup> e<sup>u²</sup>(1 + erf u) du]<sup>−1</sup></div>\n<div class=\"note\">In the spiking network s<sub>E</sub> and s<sub>I</sub> are the population spike counts per neuron and per second, smoothed with τ<sub>s</sub>. θ = 20 mV, V<sub>r</sub> = 10 mV, τ = 20 ms, τ<sub>ref</sub> = 2 ms, τ<sub>s</sub> = 10 ms.</div>", "ps": "spiking level, for each time step dt:\n    every neuron integrates μ_ext + J·(smoothed population activity) + its own noise\n    population activity ← (spikes in this step / N) / dt, smoothed with τ_s\nrate level, for each time step dt:\n    s_E ← s_E + dt/τ_s · (−s_E + F(μ_E, σ));  likewise for s_I\ncompare the binned spiking rate with s_E"}], "rate-population": [{"n": "XIV", "f": "plates/14-excitatory-inhibitory-rate-model.html", "t": "Excitatory–Inhibitory Rate Model", "eq": "<div>τ<sub>E</sub> dr<sub>E</sub>/dt = −r<sub>E</sub> + f<sub>E</sub>(w<sub>EE</sub> r<sub>E</sub> − w<sub>IE</sub> r<sub>I</sub> + I<sub>E</sub>)</div>\n<div>τ<sub>I</sub> dr<sub>I</sub>/dt = −r<sub>I</sub> + f<sub>I</sub>(w<sub>EI</sub> r<sub>E</sub> − w<sub>II</sub> r<sub>I</sub>)</div>\n<div>f(x) = 1/(1 + e<sup>−a(x − θ)</sup>)</div>\n<div class=\"note\">w<sub>ij</sub> is the projection from population i to population j. w<sub>EE</sub> = 16, w<sub>IE</sub> = 12, w<sub>II</sub> = 3; a<sub>E</sub> = 1.3, θ<sub>E</sub> = 4; a<sub>I</sub> = 2, θ<sub>I</sub> = 3.7; τ<sub>E</sub> = τ<sub>I</sub> = 10 ms.</div>", "ps": "choose a starting state (r_E, r_I)\nfor each time step dt:\n    r_E ← r_E + dt/τ_E · (−r_E + f_E(w_EE·r_E − w_IE·r_I + I_E))\n    r_I ← r_I + dt/τ_I · (−r_I + f_I(w_EI·r_E − w_II·r_I))\ndraw (r_E, r_I) in the plane, and both rates against time"}], "laminar-grouping": [{"n": "XV", "f": "plates/15-laminar-population-decomposition.html", "t": "Laminar Population Decomposition", "eq": "<div>τ dr<sub>k</sub>/dt = −r<sub>k</sub> + f(Σ<sub>l</sub> w<sub>lk</sub> r<sub>l</sub> + I<sub>k</sub>(t))</div>\n<div>k ∈ {L2/3, L4, L5, L6} × {E, I};&nbsp;&nbsp; f(x) = max(0, tanh x)</div>\n<div class=\"note\">The thalamic pulse I(t) enters L4E, and weakly L6E. Main pathways: L4E → L2/3E, L2/3E → L5E, L5E → L6E, L6E → L4E, with local E → I and I → E in every layer. The single pair has the same local loop and receives the same pulse.</div>", "ps": "for each time step dt:\n    for each population k:\n        input_k ← Σ_l w_lk · r_l + thalamic pulse (for L4E and L6E)\n        r_k ← r_k + dt/τ · (−r_k + f(input_k))\nplot r for the four excitatory populations, and mark each peak"}], "laminar-column": [{"n": "XVI", "f": "plates/16-laminar-cortical-microcircuit.html", "t": "Laminar Cortical Microcircuit", "eq": "<div>τ dr<sub>k</sub>/dt = −r<sub>k</sub> + f(Σ<sub>l</sub> w<sub>lk</sub> r<sub>l</sub> + I<sub>k</sub>(t)),&nbsp;&nbsp; f(x) = max(0, tanh x)</div>\n<div class=\"note\">Eight populations, E and I in L2/3, L4, L5 and L6. Cutting a pathway sets its weight w<sub>lk</sub> to zero.</div>", "ps": "for each time step dt:\n    for each population k:\n        input_k ← Σ_l w_lk · r_l + thalamic input (L4E, weakly L6E)\n        r_k ← r_k + dt/τ · (−r_k + f(input_k))\nshade each layer by its excitatory rate"}], "laminar-lumping": [{"n": "XVII", "f": "plates/17-lumped-population-approximation.html", "t": "Lumped Population Approximation", "eq": "<div>column: as in Laminar Cortical Microcircuit, summed over the four excitatory populations</div>\n<div>mass model: y<sub>0</sub>″ = A a S(y<sub>1</sub> − y<sub>2</sub>) − 2a y<sub>0</sub>′ − a² y<sub>0</sub></div>\n<div>y<sub>1</sub>″ = A a [p(t) + C<sub>2</sub> S(C<sub>1</sub> y<sub>0</sub>)] − 2a y<sub>1</sub>′ − a² y<sub>1</sub></div>\n<div>y<sub>2</sub>″ = B b C<sub>4</sub> S(C<sub>3</sub> y<sub>0</sub>) − 2b y<sub>2</sub>′ − b² y<sub>2</sub></div>\n<div>output: y<sub>1</sub> − y<sub>2</sub>, the mean potential of the pyramidal cells</div>", "ps": "deliver the same pulse to both models\ncolumn:  update the eight rate populations; sum the excitatory rates\nmass:    update the three synaptic kernels; output y1 − y2\nscale each response to its own range and overlay them"}], "neural-mass": [{"n": "XVIII", "f": "plates/18-neural-mass-model-of-a-cortical-column.html", "t": "Neural Mass Model of a Cortical Column", "eq": "<div>h<sub>e</sub>(t) = A a t e<sup>−a t</sup>,&nbsp;&nbsp; h<sub>i</sub>(t) = B b t e<sup>−b t</sup></div>\n<div>S(v) = 2e<sub>0</sub> / (1 + e<sup>r(v<sub>0</sub> − v)</sup>)</div>\n<div>y<sub>0</sub>″ = A a S(y<sub>1</sub> − y<sub>2</sub>) − 2a y<sub>0</sub>′ − a² y<sub>0</sub></div>\n<div>y<sub>1</sub>″ = A a [p(t) + C<sub>2</sub> S(C<sub>1</sub> y<sub>0</sub>)] − 2a y<sub>1</sub>′ − a² y<sub>1</sub></div>\n<div>y<sub>2</sub>″ = B b C<sub>4</sub> S(C<sub>3</sub> y<sub>0</sub>) − 2b y<sub>2</sub>′ − b² y<sub>2</sub></div>\n<div class=\"note\">A = 3.25 mV, B = 22 mV, a = 100 s⁻¹, b = 50 s⁻¹, C<sub>1</sub> = 135, C<sub>2</sub> = 108, C<sub>3</sub> = C<sub>4</sub> = 33.75, e<sub>0</sub> = 2.5 s⁻¹, v<sub>0</sub> = 6 mV, r = 0.56 mV⁻¹; input p(t) is noise around 220 s⁻¹. The gain slider sets A with B fixed.</div>", "ps": "for each time step dt:\n    rate into pyramidal cells ← S(y1 − y2)\n    each kernel is a damped second-order filter:\n        y'' ← gain·rate·k − 2k·y' − k²·y\n    y0 from pyramidal output, y1 from excitatory input plus noise p(t), y2 from inhibition\nEEG proxy ← y1 − y2;  spectrum ← |FFT(last 4 s)|²"}], "continuum-limit": [{"n": "XIX", "f": "plates/19-continuum-limit.html", "t": "The Continuum Limit", "eq": "<div>discrete: τ du<sub>k</sub>/dt = −u<sub>k</sub> + Δx Σ<sub>l</sub> w(x<sub>k</sub> − x<sub>l</sub>) f(u<sub>l</sub>) + I(x<sub>k</sub>)</div>\n<div>continuous: τ ∂u/∂t = −u + ∫ w(x − y) f(u(y, t)) dy + I(x)</div>\n<div>the sum becomes the integral as Δx → 0;&nbsp;&nbsp; w(x) = (w<sub>0</sub>/√(2π)σ) e<sup>−x²/2σ²</sup> − w<sub>1</sub></div>", "ps": "place M populations on a ring, spacing Δx = 2π/M\nrepeat until steady:\n    for each population k:\n        u_k ← u_k + dt/τ · (−u_k + Δx · Σ_l w(x_k − x_l)·f(u_l) + I(x_k))\ndo the same on a fine grid for the continuous field\ndraw the discrete values as stems over the continuous profile"}], "neural-field": [{"n": "XX", "f": "plates/20-neural-field-equations.html", "t": "Neural Field Equations", "eq": "<div>τ ∂u/∂t = −u + ∫ w(x − y) f(u(y, t)) dy + I(x, t)</div>\n<div>w(x) = A<sub>e</sub> e<sup>−x²/2σ<sub>e</sub>²</sup> − A<sub>i</sub> e<sup>−x²/2σ<sub>i</sub>²</sup>,&nbsp;&nbsp; f(u) = 1/(1 + e<sup>−(u − θ)/κ</sup>)</div>\n<div class=\"note\">A<sub>e</sub> = 2.5, σ<sub>e</sub> = 1, σ<sub>i</sub> = 2.5 (in units of the sheet), θ = 0.7, κ = 0.08; the slider sets A<sub>i</sub>. Fronts appear below about A<sub>i</sub> ≈ 0.6, persistent bumps between about 0.8 and 1.3, and decay above.</div>", "ps": "for each time step dt:\n    for each position x:\n        lateral ← Σ_y w(x − y) · f(u(y)) · Δy\n        u(x) ← u(x) + dt/τ · (−u(x) + lateral + I(x, t))\ndraw u as one row of the space–time image"}], "areal-parcellation": [{"n": "XXI", "f": "plates/21-brain-parcellation.html", "t": "Brain Parcellation", "eq": "<div>x<sub>R</sub>(t) = (1/|R|) Σ<sub>x ∈ R</sub> u(x, t)</div>\n<div>W<sub>RS</sub> ∝ number of neighbouring points shared by regions R and S</div>\n<div class=\"note\">Regions here are the cells of a Voronoi partition of the sheet, a stand-in for an anatomical atlas.</div>", "ps": "choose region centres and assign every point of the sheet to the nearest centre\nfor each frame:\n    x_R ← mean of u over the points of region R\n    shade region R by x_R\nW_RS ← count of adjacent point pairs with one point in R and one in S"}], "large-scale": [{"n": "XXII", "f": "plates/22-connectome-based-brain-network-model.html", "t": "Connectome-Based Brain Network Model", "eq": "<div>dz<sub>j</sub>/dt = (α + iω<sub>j</sub>) z<sub>j</sub> − |z<sub>j</sub>|² z<sub>j</sub> + G Σ<sub>i</sub> C<sub>ij</sub> z<sub>i</sub>(t − d<sub>ij</sub>/v) + η ξ<sub>j</sub>(t)</div>\n<div>activity x<sub>j</sub> = Re z<sub>j</sub>;&nbsp;&nbsp; FC<sub>ij</sub> = corr(x<sub>i</sub>, x<sub>j</sub>)</div>\n<div class=\"note\">Each region is the normal form of a neural mass near the onset of its rhythm (α slightly below zero, frequencies near 10 Hz). C<sub>ij</sub> is the structural connection from region i to region j, d<sub>ij</sub> their distance and v the conduction speed.</div>", "ps": "for each time step dt:\n    for each region j:\n        delayed input ← Σ_i C_ij · z_i(t − d_ij / v)\n        z_j ← z_j + dt · ((α + iω_j)·z_j − |z_j|²·z_j + G·delayed input) + noise\nFC ← correlation matrix of Re z over 7 s, after a 1 s transient\nsimilarity ← correlation between the off-diagonal entries of FC and C"}], "unit-abstraction": [{"n": "XXIII", "f": "plates/23-weighted-sum-and-nonlinearity.html", "t": "Weighted Sum and Nonlinearity", "eq": "<div>rate neuron: τ da<sub>j</sub>/dt = −a<sub>j</sub> + f(Σ<sub>i</sub> w<sub>ij</sub> a<sub>i</sub>)</div>\n<div>artificial unit: a<sub>j</sub> = f(Σ<sub>i</sub> w<sub>ij</sub> a<sub>i</sub>)</div>\n<div>f(x) = 1/(1 + e<sup>−4(x − 0.5)</sup>)</div>\n<div class=\"note\">The two agree when the inputs a<sub>i</sub> change slowly compared with τ.</div>", "ps": "for each time step dt:\n    drive ← w_1j·a_1 + w_2j·a_2\n    rate neuron:      a_j ← a_j + dt/τ · (−a_j + f(drive))\n    artificial unit:  u_j ← f(drive)"}], "artificial-network": [{"n": "XXIV", "f": "plates/24-artificial-neural-networks.html", "t": "Artificial Neural Networks", "eq": "<div>hidden: a<sub>j</sub> = tanh(Σ<sub>i</sub> w<sub>ij</sub> x<sub>i</sub> + b<sub>j</sub>)</div>\n<div>output: y = σ(Σ<sub>j</sub> w<sub>jk</sub> a<sub>j</sub> + b<sub>k</sub>),&nbsp;&nbsp; σ(z) = 1/(1 + e<sup>−z</sup>)</div>\n<div>loss: L = −Σ<sub>n</sub> [t<sub>n</sub> ln y<sub>n</sub> + (1 − t<sub>n</sub>) ln(1 − y<sub>n</sub>)]</div>\n<div>update: w ← w − η ∂L/∂w</div>", "ps": "for each training step:\n    for every point x with target t:\n        forward:  a_j ← tanh(Σ_i w_ij·x_i + b_j);  y ← σ(Σ_j w_jk·a_j + b_k)\n        backward: δ_out ← y − t;  δ_j ← δ_out · w_jk · (1 − a_j²)\n        accumulate the gradients δ·(input of each weight)\n    move every weight a small step against its gradient"}], "binarisation": [{"n": "XXV", "f": "plates/25-binary-units-and-symmetric-coupling.html", "t": "Binary Units and Symmetric Coupling", "eq": "<div>r<sub>i</sub> = (number of spikes of neuron i)/T</div>\n<div>s<sub>i</sub> = +1 if r<sub>i</sub> &gt; θ<sub>b</sub>,&nbsp;&nbsp; s<sub>i</sub> = −1 otherwise</div>\n<div class=\"note\">The neurons are leaky integrate-and-fire cells driven by I<sub>i</sub> = I<sub>0</sub> + ΔI ξ<sub>i</sub> + a fixed offset per cell, plus noise; ξ<sub>i</sub> = ±1 is the stored pattern.</div>", "ps": "simulate the spiking neurons for T = 1 s\nfor each neuron i:\n    r_i ← spike count / T\n    s_i ← +1 if r_i > θ_b, else −1\ncompare s with the stored pattern ξ"}], "attractor-network": [{"n": "XXVI", "f": "plates/26-attractor-networks-and-associative-memory.html", "t": "Attractor Networks and Associative Memory", "eq": "<div>w<sub>ij</sub> = (1/N) Σ<sub>μ</sub> ξ<sub>i</sub><sup>μ</sup> ξ<sub>j</sub><sup>μ</sup> + λ (1/N) Σ<sub>μ</sub> ξ<sub>i</sub><sup>μ</sup> ξ<sub>j</sub><sup>μ+1</sup></div>\n<div>s<sub>j</sub> ← sign(Σ<sub>i</sub> w<sub>ij</sub> s<sub>i</sub>)</div>\n<div>for λ = 0: E = −½ Σ<sub>ij</sub> w<sub>ij</sub> s<sub>i</sub> s<sub>j</sub> can only decrease</div>\n<div class=\"note\">w<sub>ij</sub> is the synapse from unit i to unit j; ξ<sup>μ</sup> are the stored patterns, taken in a cycle. N = 100 units, four patterns, all units updated together.</div>", "ps": "build w from the stored patterns (and the sequence term λ)\nstart from a cue: a stored pattern with a fraction of units flipped\nrepeat:\n    for every unit j at once:\n        s_j ← +1 if Σ_i w_ij·s_i ≥ 0, else −1\n    report the overlap of s with each stored pattern"}], "phase-reduction": [{"n": "XXVII", "f": "plates/27-phase-reduction.html", "t": "Phase Reduction", "eq": "<div>dθ/dt = 1/T + Z(θ) I(t)</div>\n<div>for a brief kick ε at phase θ: Δθ ≈ ε Z(θ)</div>\n<div class=\"note\">θ runs from 0 to 1 over one period T; Z is the phase response curve for kicks to r<sub>E</sub>, measured here by kicking the full model with a small ε at many phases. The oscillator is the rate model with I<sub>E</sub> = 1.5 and w<sub>EI</sub> = 15.</div>", "ps": "find the limit cycle and its period T\nfor each phase θ on the cycle:\n    kick r_E by a small ε, run on for several periods\n    Z(θ) ← (phase shift measured against the unkicked run) / ε\nfor the chosen kick: compare the measured shift with ε·Z(θ)"}], "phase-oscillator": [{"n": "XXVIII", "f": "plates/28-coupled-phase-oscillators.html", "t": "Coupled Phase Oscillators", "eq": "<div>dθ<sub>j</sub>/dt = ω<sub>j</sub> + (K/N) Σ<sub>i</sub> sin(θ<sub>i</sub> − θ<sub>j</sub>)</div>\n<div>r e<sup>iψ</sup> = (1/N) Σ<sub>j</sub> e<sup>iθ<sub>j</sub></sup></div>\n<div>for a Gaussian spread σ of natural frequencies: K<sub>c</sub> = 2/(π g(0)) = √(8/π) σ ≈ 1.6 σ</div>", "ps": "for each time step dt:\n    for each oscillator j:\n        pull ← (K/N) · Σ_i sin(θ_i − θ_j)\n        θ_j ← θ_j + dt · (ω_j + pull)\n    r ← |mean of e^{iθ_j}|"}], "structure-as-graph": [{"n": "XXIX", "f": "plates/29-graph-abstraction.html", "t": "Graph Abstraction", "eq": "<div>A<sub>ij</sub> = 1 if |w<sub>ij</sub>| &gt; θ<sub>w</sub>, and 0 otherwise (direction and sign ignored)</div>\n<div>degree k<sub>i</sub> = Σ<sub>j</sub> A<sub>ij</sub></div>\n<div>clustering C<sub>i</sub> = (edges among the neighbours of i) / (k<sub>i</sub>(k<sub>i</sub> − 1)/2)</div>\n<div class=\"note\">The dynamics on the left: τ da<sub>j</sub>/dt = −a<sub>j</sub> + tanh(Σ<sub>i</sub> w<sub>ij</sub> a<sub>i</sub> + noise).</div>", "ps": "for every pair of units (i, j):\n    keep an undirected edge if |w_ij| or |w_ji| exceeds θ_w\ndraw the kept edges, with width ∝ |w|\ncompute degree, clustering and the number of connected components"}], "connectivity-graph": [{"n": "XXX", "f": "plates/30-connectivity-graphs.html", "t": "Connectivity Graphs", "eq": "<div>C = (1/N) Σ<sub>i</sub> (edges among the neighbours of i) / (k<sub>i</sub>(k<sub>i</sub> − 1)/2)</div>\n<div>L = average over all pairs of the length of the shortest path</div>\n<div class=\"note\">Ring of N = 40 vertices, each joined to its two nearest neighbours on either side; each edge is rewired to a random target with probability p. Curves average ten random graphs per value of p.</div>", "ps": "start from a ring lattice\nfor each edge: with probability p, move its far end to a random vertex\nC ← average clustering coefficient\nL ← average shortest path length (breadth-first search from every vertex)\nplot C(p)/C(0) and L(p)/L(0)"}], "observation-model": [{"n": "XXXI", "f": "plates/31-forward-problem.html", "t": "The Forward Problem", "eq": "<div>φ(r) = (1/4πσ) p · (r − r<sub>0</sub>) / |r − r<sub>0</sub>|³</div>\n<div class=\"note\">The potential of a current dipole p at r<sub>0</sub> in an unbounded medium of conductivity σ. The scalp curve smooths this along the scalp to mimic the blurring by the skull; a full calculation would solve the problem for nested shells of different conductivity.</div>", "ps": "place the dipole at depth d with orientation α\nfor each electrode on the scalp:\n    φ ← p · (r_electrode − r_0) / |r_electrode − r_0|³\nsmooth φ along the scalp (skull blurring)\nplot φ against electrode position"}], "forward-model": [{"n": "XXXII", "f": "plates/32-forward-models-of-neural-signals.html", "t": "Forward Models of Neural Signals", "eq": "<div>y<sub>k</sub>(t) = Σ<sub>s</sub> L<sub>ks</sub> s(t),&nbsp;&nbsp; or y = L s</div>\n<div>L<sub>ks</sub> = potential at electrode k produced by a unit dipole at source s</div>\n<div class=\"note\">The inverse s = L<sup>+</sup> y is only one of many solutions whenever there are fewer independent sensors than possible sources.</div>", "ps": "for each source s: generate its activity s(t) with the neural mass model\ncompute the lead field L from source and electrode positions\nfor each time t:\n    y(t) ← L · s(t)\ndraw one trace per electrode"}], "long-term-plasticity": [{"n": "XXXIII", "f": "plates/33-spike-timing-dependent-plasticity.html", "t": "Spike-Timing-Dependent Plasticity", "eq": "<div>Δt = t<sub>post</sub> − t<sub>pre</sub></div>\n<div>asymmetric Hebbian: Δw = A<sub>+</sub> e<sup>−Δt/τ<sub>+</sub></sup> for Δt &gt; 0,&nbsp;&nbsp; Δw = −A<sub>−</sub> e<sup>Δt/τ<sub>−</sub></sup> for Δt &lt; 0</div>\n<div>asymmetric anti-Hebbian: the same window with the sign reversed</div>\n<div>symmetric depression: Δw = −A e<sup>−|Δt|/τ</sup></div>\n<div>symmetric with depressing flanks: Δw = A (1 − Δt²/τ²) e<sup>−Δt²/2τ²</sup></div>\n<div class=\"note\">A<sub>+</sub> = 0.08, A<sub>−</sub> = 0.045, τ<sub>+</sub> = 17 ms, τ<sub>−</sub> = 34 ms; weights are kept between 0 and 1. The window shapes follow those reviewed by Abbott and Nelson (2000), to be checked against the review.</div>", "ps": "for each pairing of a presynaptic and a postsynaptic spike:\n    Δt ← t_post − t_pre\n    Δw ← W(Δt)          (W is the chosen learning window)\n    w ← clip(w + Δw, 0, 1)"}, {"n": "XXXIV", "f": "plates/34-normalised-hebbian-learning-and-principal-components.html", "t": "Normalised Hebbian Learning and Principal Components", "eq": "<div>a<sub>j</sub> = Σ<sub>i</sub> w<sub>ij</sub> a<sub>i</sub></div>\n<div>Hebbian: Δw<sub>ij</sub> = η a<sub>i</sub> a<sub>j</sub></div>\n<div>normalised: Δw<sub>ij</sub> = η a<sub>j</sub> (a<sub>i</sub> − a<sub>j</sub> w<sub>ij</sub>)</div>\n<div class=\"note\">For small η the normalised rule converges to the unit eigenvector of the input covariance with the largest eigenvalue, the first principal component. It equals a Hebbian step followed by renormalisation, to first order in η.</div>", "ps": "for each input pattern (a_1, a_2) drawn from the cloud:\n    a_j ← w_1j·a_1 + w_2j·a_2\n    for each input i:\n        Hebbian:     w_ij ← w_ij + η·a_i·a_j\n        normalised:  w_ij ← w_ij + η·a_j·(a_i − a_j·w_ij)"}], "short-term-plasticity": [{"n": "XXXV", "f": "plates/35-synaptic-depression-and-facilitation.html", "t": "Synaptic Depression and Facilitation", "eq": "<div>dx/dt = (1 − x)/τ<sub>rec</sub> − u x δ(t − t<sub>sp</sub>)</div>\n<div>du/dt = (U − u)/τ<sub>fac</sub> + U (1 − u) δ(t − t<sub>sp</sub>)</div>\n<div>response to a spike ∝ u x, with u taken just after its increment</div>\n<div class=\"note\">Depressing: U = 0.5, no facilitation. Facilitating: U = 0.1, τ<sub>fac</sub> = 600 ms. The postsynaptic response is drawn with a membrane time constant of 20 ms.</div>", "ps": "for each presynaptic spike:\n    u ← u + U·(1 − u)           (facilitation)\n    release ← u·x;  x ← x − release\n    add a postsynaptic response of size ∝ release\nbetween spikes:\n    x relaxes towards 1 with τ_rec;  u relaxes towards U with τ_fac"}], "neuromodulation": [{"n": "XXXVI", "f": "plates/36-neuromodulatory-gain-control.html", "t": "Neuromodulatory Gain Control", "eq": "<div>a = f(g (I − I<sub>½</sub>)),&nbsp;&nbsp; f(x) = 1/(1 + e<sup>−x</sup>)</div>\n<div>g = g<sub>0</sub> · 4<sup>m</sup>,&nbsp;&nbsp; m ∈ [−1, 1] the modulator level</div>", "ps": "gain g ← g_0 · 4^m\nfor each input value I(t):\n    a(t) ← f(g · (I(t) − I_½))"}], "oscillatory-gating": [{"n": "XXXVII", "f": "plates/37-phase-dependent-gating.html", "t": "Phase-Dependent Gating", "eq": "<div>excitability e(t) = cos(2π f t)</div>\n<div>response R = F(A + β e(t<sub>arrival</sub>) − θ),&nbsp;&nbsp; F(x) = 1/(1 + e<sup>−x/κ</sup>)</div>\n<div>arrival phase φ = f t<sub>arrival</sub> mod 1</div>\n<div class=\"note\">f = 8 Hz, A = θ = 1, β = 0.8, κ = 0.15.</div>", "ps": "for each cycle of the receiver's rhythm:\n    a pulse arrives at phase φ\n    R ← F(A + β·cos(2π·φ) − θ)\nplot R against φ"}], "homeostatic-regulation": [{"n": "XXXVIII", "f": "plates/38-homeostatic-synaptic-scaling.html", "t": "Homeostatic Synaptic Scaling", "eq": "<div>r<sub>j</sub> = g · max(0, Σ<sub>i</sub> w<sub>ij</sub> a<sub>i</sub> − θ)</div>\n<div>τ<sub>h</sub> dw<sub>ij</sub>/dt = w<sub>ij</sub> (r<sub>target</sub> − r<sub>j</sub>) / r<sub>target</sub></div>\n<div class=\"note\">τ<sub>h</sub> = 8 hours, r<sub>target</sub> = 5 Hz. Time on the plate runs about four hours per second.</div>", "ps": "for each time step dt (minutes):\n    r_j ← g · max(0, Σ_i w_ij·a_i − θ)\n    for each input i:\n        w_ij ← w_ij + dt/τ_h · w_ij · (r_target − r_j) / r_target"}], "noise-variability": [{"n": "XXXIX", "f": "plates/39-noise-enhanced-signal-detection.html", "t": "Noise-Enhanced Signal Detection", "eq": "<div>τ dV/dt = −(V − E<sub>L</sub>) + R (I<sub>0</sub> + I<sub>1</sub> sin 2πft) + σ √τ ξ(t)</div>\n<div>fidelity = correlation between the spike count in 20 ms bins and the signal</div>\n<div class=\"note\">E<sub>L</sub> = −70 mV, θ = −50 mV, reset −70 mV, τ = 20 ms; RI<sub>0</sub> = 16 mV and RI<sub>1</sub> = 3 mV, so the noiseless voltage peaks about 1 mV below threshold; f = 5 Hz.</div>", "ps": "for each time step dt:\n    V ← V + dt/τ · (−(V − E_L) + R·(I_0 + I_1·sin 2πft)) + σ·√(dt/τ)·ξ\n    if V ≥ θ: record a spike, V ← V_reset\nfidelity ← correlation(spike counts in 20 ms bins, signal)"}]};
+  const byId = {}; N.forEach(n => byId[n.id] = n);
+  const eById = {}; E.forEach(e => eById[e.id] = e);
+  const spine = N.filter(n => n.kind === 'spine');
+  const nm = n => Array.isArray(n.name) ? n.name.reduce((a, w) => a ? (a.endsWith('-') ? a.slice(0, -1) + w : a + ' ' + w) : w, '') : n.name;
+  const conf = { est: ['●', 'g-est', 'established'], lik: ['◐', 'g-lik', 'likely'], unv: ['○', 'g-unv', 'unverified'] };
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  /* ---------- glyphs for the cards ---------- */
+  const f1 = n => (+n).toFixed(1);
+  const ln = (x1, y1, x2, y2, c = '') => `<path class="${c}" d="M${f1(x1)},${f1(y1)} L${f1(x2)},${f1(y2)}"/>`;
+  const ci = (x, y, r, c = '') => `<circle class="${c}" cx="${f1(x)}" cy="${f1(y)}" r="${r}"/>`;
+  const pl = (pts, c = '', close) => `<path class="${c}" d="M${pts.map(p => f1(p[0]) + ',' + f1(p[1])).join(' L')}${close ? ' Z' : ''}"/>`;
+  const tx = (x, y, s, a = 'start') => `<text x="${x}" y="${y}" text-anchor="${a}">${s}</text>`;
+  const ar = (x1, y1, x2, y2, c = '') => { const a = Math.atan2(y2 - y1, x2 - x1), h = 6; return `<path class="${c}" d="M${f1(x1)},${f1(y1)} L${f1(x2)},${f1(y2)} M${f1(x2 - h * Math.cos(a - .45))},${f1(y2 - h * Math.sin(a - .45))} L${f1(x2)},${f1(y2)} L${f1(x2 - h * Math.cos(a + .45))},${f1(y2 - h * Math.sin(a + .45))}"/>`; };
+  const ih = (x1, y1, x2, y2) => ln(x1, y1, x2, y2) + ci(x2, y2, 2.6, 'f n');
+  const tri = (x, y, s, c = '') => pl([[x, y - s], [x + s * .87, y + s * .5], [x - s * .87, y + s * .5]], c, true);
+  const cut = (x1, y1, x2, y2, r1, r2) => { const d = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / d, uy = (y2 - y1) / d; return [x1 + ux * r1, y1 + uy * r1, x2 - ux * r2, y2 - uy * r2]; };
+  const rng = s => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const seg = (x1, y1, x2, y2, n) => { let s = ln(x1, y1, x2, y2); const a = Math.atan2(y2 - y1, x2 - x1); for (let i = 1; i <= n; i++) { const t = i / (n + 1), x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t; s += ln(x - 3.5 * Math.sin(a), y + 3.5 * Math.cos(a), x + 3.5 * Math.sin(a), y - 3.5 * Math.cos(a)); } return s; };
+  const zig = (x, y1, y2) => { const p = [[x, y1]]; const n = 6, h = (y2 - y1) / n; for (let i = 0; i < n; i++) p.push([x + (i % 2 ? -6 : 6), y1 + h * (i + .5)]); p.push([x, y2]); return pl(p); };
+  const syn = (x, y, s, psd = 2.4) => `<path d="M${f1(x)},${f1(y - 36 * s)} L${f1(x)},${f1(y - 21 * s)}"/><ellipse cx="${f1(x)}" cy="${f1(y - 11 * s)}" rx="${f1(11 * s)}" ry="${f1(10 * s)}"/>` +
+    ci(x - 4 * s, y - 13 * s, f1(1.8 * s), 'f n') + ci(x + 3.5 * s, y - 8 * s, f1(1.8 * s), 'f n') + ci(x + 1 * s, y - 16 * s, f1(1.8 * s), 'f n') +
+    `<path d="M${f1(x - 14 * s)},${f1(y + 1 * s)} C${f1(x - 14 * s)},${f1(y + 16 * s)} ${f1(x + 14 * s)},${f1(y + 16 * s)} ${f1(x + 14 * s)},${f1(y + 1 * s)}"/>` +
+    ln(x, y + 13 * s, x, y + 30 * s) + `<path d="M${f1(x - 8 * s)},${f1(y + 3 * s)} L${f1(x + 8 * s)},${f1(y + 3 * s)}" style="stroke-width:${psd}"/>`;
+
+  const G = {
+    'ion-channels': () => {
+      let s = '';
+      [[14, 92], [128, 206]].forEach(([a, b]) => { for (let x = a; x <= b; x += 9) s += ci(x, 46, 2.6) + ci(x, 70, 2.6) + ln(x, 49, x, 56, 't') + ln(x, 67, x, 60, 't'); });
+      s += '<rect x="95" y="38" width="12" height="40" rx="4"/><rect x="113" y="38" width="12" height="40" rx="4"/>';
+      s += ci(110, 22, 3.5, 'af') + ci(93, 13, 3.5, 'af') + ci(128, 17, 3.5, 'af') + ci(110, 58, 3.5, 'af') + ar(110, 84, 110, 102, 'a');
+      return s + tx(214, 28, 'out', 'end') + tx(214, 98, 'in', 'end');
+    },
+    'compartmental': () => ci(62, 68, 11) + seg(51, 68, 10, 68, 3) + seg(70, 60, 112, 36, 3) + seg(112, 36, 160, 18, 3) + seg(112, 36, 166, 48, 3) +
+      seg(160, 18, 204, 12, 2) + seg(72, 76, 118, 86, 3) + seg(118, 86, 172, 76, 3) + seg(118, 86, 156, 104, 2) + ci(166, 48, 3, 'af') + ci(204, 12, 3, 'af') + ci(172, 76, 3, 'af'),
+    'conductance-point': () => {
+      let s = ln(30, 20, 196, 20) + ln(30, 94, 196, 94) + ln(48, 20, 48, 51) + ln(38, 51, 58, 51) + ln(38, 59, 58, 59) + ln(48, 59, 48, 94);
+      [[95, 'gNa', 1], [140, 'gK', 1], [185, 'gL', 0]].forEach(([x, l, v]) => { s += ln(x, 20, x, 38) + zig(x, 38, 76) + ln(x, 76, x, 94) + (v ? ar(x - 12, 70, x + 12, 44, 'a') : '') + tx(x + 9, 108, l); });
+      return s + tx(56, 108, 'C') + tx(12, 24, 'out') + tx(12, 98, 'in');
+    },
+    'reduced': () => {
+      const X = v => 112 + v * 42, Y = w => 56 - w * 30;
+      const cub = []; for (let v = -2.25; v <= 2.26; v += .05) cub.push([X(v), Y(v - v * v * v / 3)]);
+      const cyc = [];
+      for (let v = 1.95; v >= 1.02; v -= .05) cyc.push([X(v), Y(v - v * v * v / 3) - 3]);
+      for (let v = -1.95; v <= -1.02; v += .05) cyc.push([X(v), Y(v - v * v * v / 3) + 3]);
+      let lo = -2, hi = -0.5; const g = v => v - v * v * v / 3 - (v + .7) / .8;
+      for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; (g(lo) * g(m) <= 0) ? hi = m : lo = m; }
+      const vf = lo;
+      return ar(18, 100, 212, 100) + ar(18, 100, 18, 6) + pl(cub) + ln(X(-1.6), Y((-1.6 + .7) / .8), X(.6), Y((.6 + .7) / .8), 'd') +
+        pl(cyc, 'a', true) + ci(X(vf), Y(vf - vf * vf * vf / 3), 3, 'p') + tx(208, 96, 'v', 'end') + tx(24, 14, 'w');
+    },
+    'integrate-and-fire': () => {
+      let s = ln(14, 30, 206, 30, 'd') + tx(214, 33, 'θ', 'end');
+      let x = 16; const pts = [[x, 92]]; let spikes = '';
+      for (let c = 0; c < 3 && x < 200; c++) {
+        for (let t = 0; ; t += 1.5) { const v = 92 - 72 * (1 - Math.exp(-t / 28)); pts.push([x + t, v]); if (v <= 30) { x += t; break; } }
+        spikes += ln(x, 30, x, 6, 'a'); pts.push([x, 92]);
+      }
+      pts.push([206, 92 - 72 * (1 - Math.exp(-(206 - x) / 28))]);
+      return s + pl(pts) + spikes;
+    },
+    'spiking-network': () => {
+      const P = [[30, 30], [84, 16], [138, 28], [190, 18], [56, 82], [146, 86], [196, 72], [100, 58], [168, 50]];
+      const I = new Set([7, 8]);
+      const L = [[0, 1], [1, 2], [2, 3], [0, 4], [4, 7], [7, 2], [7, 0], [7, 5], [5, 6], [6, 3], [8, 6], [8, 2], [3, 8], [5, 8], [1, 7], [4, 5]];
+      let s = '';
+      L.forEach(([a, b]) => { const [x1, y1, x2, y2] = cut(P[a][0], P[a][1], P[b][0], P[b][1], 8, 9); s += I.has(a) ? ih(x1, y1, x2, y2) : ar(x1, y1, x2, y2, 't'); });
+      P.forEach((p, i) => s += I.has(i) ? ci(p[0], p[1], 6, 'f') : tri(p[0], p[1] + 1, 7, 'p'));
+      return s;
+    },
+    'rate-population': () => {
+      const sg = []; for (let x = 88; x <= 132; x += 1) sg.push([x, 72 - 32 / (1 + Math.exp(-(x - 110) / 4.5))]);
+      return ci(110, 56, 30) + pl(sg, 'a') + ar(20, 28, 80, 46) + ar(20, 56, 79, 56) + ar(20, 84, 80, 66) + ar(140, 56, 206, 56) +
+        '<path d="M97,29 C88,2 132,2 123,29"/>' + pl([[117, 24], [123, 29], [126, 22]]) + tx(206, 50, 'r(t)', 'end');
+    },
+    'laminar-column': () => {
+      let s = '<rect x="78" y="6" width="64" height="98"/>';
+      [18, 44, 60, 82].forEach(y => s += ln(78, y, 142, y, 't'));
+      [[15, '1'], [34, '2/3'], [55, '4'], [74, '5'], [96, '6']].forEach(([y, l]) => s += tx(72, y, l, 'end'));
+      s += tri(110, 32, 6, 'p') + ci(110, 52, 4.5, 'p') + tri(110, 72, 6, 'p') + tri(110, 94, 6, 'p');
+      s += ar(110, 46, 110, 38, 't') + ar(122, 34, 122, 67) + ar(98, 90, 98, 57) + ar(110, 78, 110, 87, 't');
+      s += ar(10, 52, 103, 52) + tx(12, 46, 'input') + ar(118, 30, 212, 30, 'a') + tx(212, 24, 'forward', 'end') + ar(212, 12, 132, 12) + tx(212, 9, 'back', 'end') + ar(118, 76, 212, 76) + tx(212, 70, 'down', 'end');
+      return s;
+    },
+    'neural-mass': () => tri(110, 32, 11, 'p') + ci(55, 86, 9, 'p') + ci(165, 86, 9, 'f') +
+      ar(98, 40, 62, 77) + ar(68, 81, 104, 45) + ar(122, 40, 158, 77) + ih(154, 82, 117, 45) +
+      ar(10, 32, 96, 32) + tx(12, 26, 'p(t)') + ar(124, 32, 212, 32, 'a') + tx(212, 26, 'EEG-like', 'end') + tx(55, 107, 'exc', 'middle') + tx(165, 107, 'inh', 'middle') + tx(110, 14, 'pyr', 'middle'),
+    'neural-field': () => {
+      const h = (u, v) => { const r = Math.hypot(u - .45, v - .5); return Math.cos(16 * r) * Math.exp(-r * 3.6); };
+      const P = (u, v) => [16 + u * 140 + v * 52, 96 - v * 52 - h(u, v) * 30];
+      let s = '';
+      for (let j = 0; j <= 10; j++) { const v = j / 10, p = []; for (let i = 0; i <= 40; i++) p.push(P(i / 40, v)); s += pl(p, j === 5 ? 'a' : 't'); }
+      for (let i = 0; i <= 14; i++) { const u = i / 14, p = []; for (let j = 0; j <= 30; j++) p.push(P(u, j / 30)); s += pl(p, 't'); }
+      return s + tx(212, 104, 'u(x, t)', 'end');
+    },
+    'large-scale': () => {
+      const P = [[40, 52], [62, 28], [92, 17], [126, 15], [158, 25], [184, 48], [172, 78], [138, 92], [100, 94], [64, 82], [112, 55]];
+      const L = [[0, 1, 1], [1, 2, .6], [2, 3, 1.9], [3, 4, .8], [4, 5, 1.3], [5, 6, .7], [6, 7, 1.6], [7, 8, .6], [8, 9, 1.1], [9, 0, .9], [10, 2, 1.4], [10, 6, 1], [10, 9, .7], [1, 4, .6], [10, 3, .8]];
+      let s = '<ellipse cx="112" cy="55" rx="100" ry="50" class="t"/>';
+      L.forEach(([a, b, w]) => s += `<path d="M${P[a][0]},${P[a][1]} L${P[b][0]},${P[b][1]}" style="stroke-width:${w}"/>`);
+      s += `<path class="a d" d="M${P[0][0]},${P[0][1]} Q112,120 ${P[5][0]},${P[5][1]}"/>` + tx(112, 106, 'τ', 'middle');
+      P.forEach(p => s += ci(p[0], p[1], 4.5, 'p'));
+      return s;
+    },
+    'artificial-network': () => {
+      const xs = [34, 88, 142, 192], sz = [3, 4, 4, 2]; const L = xs.map((x, k) => Array.from({ length: sz[k] }, (_, i) => [x, 55 + (i - (sz[k] - 1) / 2) * 24]));
+      let s = '';
+      for (let k = 0; k < 3; k++) L[k].forEach(a => L[k + 1].forEach(b => s += ln(a[0], a[1], b[0], b[1], 't')));
+      L.flat().forEach(p => s += ci(p[0], p[1], 5.5, 'p'));
+      return s + pl([[86, 56], [88, 56], [88, 52], [90, 52]], 'a') + tx(8, 104, 'Σ w·x, then θ');
+    },
+    'attractor-network': () => {
+      const sq = v => v * v;
+      const E = x => 22 + 62 * (Math.exp(-sq((x - 52) / 18)) + .75 * Math.exp(-sq((x - 116) / 16)) + .9 * Math.exp(-sq((x - 178) / 17)));
+      const p = []; for (let x = 12; x <= 210; x += 2) p.push([x, E(x)]);
+      let s = pl(p) + ci(140, E(140) - 6, 5, 'af') + ar(136, E(136) - 14, 124, E(124) - 12, 'a');
+      const pat = (x0, y0, bits) => { let r = ''; bits.forEach((b, i) => { const xx = x0 + (i % 3) * 6, yy = y0 + Math.floor(i / 3) * 6; r += `<rect x="${xx}" y="${yy}" width="5" height="5" class="${b ? 'f' : 't'}"/>`; }); return r; };
+      return s + pat(43, 96, [1, 0, 1, 0, 1, 0, 1, 0, 1]) + pat(107, 96, [1, 1, 1, 0, 0, 0, 1, 1, 1]) + pat(169, 96, [0, 1, 0, 1, 1, 1, 0, 1, 0]) + tx(8, 14, 'energy');
+    },
+    'phase-oscillator': () => {
+      const cx = 58, cy = 56, R = 38; let s = ci(cx, cy, R);
+      const th = [5.95, .12, .35, .55, .8, 2.7]; let mx = 0, my = 0;
+      th.forEach(t => { s += ci(cx + R * Math.cos(t), cy - R * Math.sin(t), 4, 'f'); mx += Math.cos(t); my += Math.sin(t); });
+      mx /= th.length; my /= th.length;
+      s += ar(cx, cy, cx + R * mx, cy - R * my, 'a');
+      s += `<path d="M${f1(cx + 46 * Math.cos(1.2))},${f1(cy - 46 * Math.sin(1.2))} A46,46 0 0 0 ${f1(cx + 46 * Math.cos(1.9))},${f1(cy - 46 * Math.sin(1.9))}"/>`;
+      [0, 1.6, 3.4].forEach((ph, k) => { const p = []; for (let x = 112; x <= 210; x += 2) { const d = ph * Math.exp(-(x - 112) / 30); p.push([x, 56 - 20 * Math.sin((x - 112) / 9 + d)]); } s += pl(p, k ? 't' : ''); });
+      return s + tx(210, 104, 'phases lock', 'end');
+    },
+    'connectivity-graph': () => {
+      const r = rng(5), n = 8, M = [];
+      for (let i = 0; i < n; i++) { M.push([]); for (let j = 0; j < n; j++) M[i].push(i === j ? 0 : ((i < 4) === (j < 4) ? r() < .75 : r() < .12) ? 1 : 0); }
+      for (let i = 0; i < n; i++) for (let j = 0; j < i; j++) M[i][j] = M[j][i];
+      let s = '<rect x="14" y="18" width="80" height="80"/>';
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (M[i][j]) s += `<rect class="f n" x="${14 + j * 10 + 1}" y="${18 + i * 10 + 1}" width="8" height="8"/>`;
+      const P = [[130, 26], [158, 18], [150, 48], [124, 54], [176, 70], [204, 62], [198, 96], [168, 96]];
+      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) if (M[i][j]) s += ln(P[i][0], P[i][1], P[j][0], P[j][1], 't');
+      P.forEach(p => s += ci(p[0], p[1], 4.5, 'p'));
+      return s + tx(14, 12, 'adjacency') + ar(100, 58, 116, 58);
+    },
+    'forward-model': () => {
+      let s = ci(70, 58, 48) + ci(70, 58, 40, 't') + ci(70, 58, 32, 't') + ar(64, 74, 77, 42, 'a');
+      [-150, -120, -90, -60, -30].forEach(d => { const a = d * Math.PI / 180; s += `<rect class="f n" x="${f1(70 + 50 * Math.cos(a) - 3)}" y="${f1(58 + 50 * Math.sin(a) - 3)}" width="6" height="6"/>`; });
+      const a = -60 * Math.PI / 180, ex0 = 70 + 50 * Math.cos(a), ey0 = 58 + 50 * Math.sin(a);
+      s += ln(ex0 + 3, ey0, 130, 14);
+      const r = rng(9), p = []; let y = 0; for (let x = 130; x <= 210; x += 2) { y = .8 * y + (r() - .5) * 6; p.push([x, 30 + 9 * Math.sin((x - 130) / 7) + y]); }
+      return s + pl(p) + tx(210, 104, 'sensor sees a sum', 'end');
+    },
+    'dynamical-systems': () => {
+      let s = '';
+      for (let x = 22; x <= 202; x += 20) for (let y = 14; y <= 98; y += 14) {
+        const X = (x - 110) / 40, Y = (56 - y) / 40, vx = -.35 * X - Y, vy = X - .35 * Y, m = Math.hypot(vx, vy) || 1;
+        s += ar(x - 4.5 * vx / m, y + 4.5 * vy / m, x + 4.5 * vx / m, y - 4.5 * vy / m, 't');
+      }
+      const p = []; for (let t = 0; t <= 16; t += .1) { const r = 62 * Math.exp(-.14 * t); p.push([110 + r * Math.cos(t), 56 - .72 * r * Math.sin(t)]); }
+      return s + pl(p, 'a') + ci(110, 56, 3, 'af');
+    },
+    'long-term-plasticity': () => syn(60, 50, .8, 1.6) + syn(160, 46, 1.2, 3.6) + ar(92, 52, 126, 52, 'o') + tx(60, 106, 'before', 'middle') + tx(160, 106, 'after', 'middle') + tx(109, 44, 'Δw', 'middle'),
+    'short-term-plasticity': () => {
+      const ts = [24, 56, 88, 120, 152], A = [46, 33, 25, 19, 15]; let s = '';
+      ts.forEach(t => s += ln(t, 6, t, 20, 'o'));
+      const p = []; for (let x = 12; x <= 210; x += 1) { let v = 0; ts.forEach((t, i) => { if (x > t) { const u = (x - t) / 6; v += A[i] * u * Math.exp(1 - u); } }); p.push([x, 98 - v]); }
+      return s + ln(12, 98, 210, 98, 'd t') + pl(p) + tx(210, 30, 'depressing', 'end');
+    },
+    'neuromodulation': () => {
+      let s = syn(62, 58, 1) + '<path class="o" d="M156,4 C162,18 168,24 170,30"/><ellipse class="o" cx="171" cy="38" rx="6" ry="8"/><path class="o" d="M172,46 C174,62 182,80 190,104"/>';
+      const r = rng(21); for (let i = 0; i < 34; i++) { const t = r(), ang = Math.PI * (.6 + r() * .9), d = 10 + t * 90; const x = 171 + d * Math.cos(ang), y = 38 + d * .55 * Math.sin(ang) * -1 + (r() - .5) * 30; if (x > 10 && y > 6 && y < 104) s += ci(x, y, 1.6, 'of'); }
+      return s + tx(210, 104, 'volume release', 'end');
+    },
+    'oscillatory-gating': () => {
+      let s = ''; [26, 90, 154].forEach(c => s += `<rect class="ow" x="${c - 12}" y="10" width="24" height="96"/>`);
+      const p = []; for (let x = 10; x <= 210; x += 2) p.push([x, 46 - 24 * Math.sin(2 * Math.PI * (x - 10) / 64)]);
+      s += pl(p);
+      [20, 38, 52, 70, 86, 96, 112, 130, 148, 160, 178, 196].forEach(x => { const inW = [26, 90, 154].some(c => Math.abs(x - c) <= 12); s += inW ? ln(x, 82, x, 104, 'o') : ln(x, 96, x, 104, 't'); });
+      return s;
+    },
+    'homeostatic-regulation': () => {
+      const p = []; for (let x = 14; x <= 206; x += 2) p.push([x, 58 - 38 * Math.exp(-(x - 14) / 55) * Math.cos((x - 14) / 13)]);
+      return ln(14, 58, 206, 58, 'd o') + pl(p) + '<path class="o" d="M200,74 C160,104 70,104 30,80"/>' + pl([[36, 78], [30, 80], [34, 86]], 'o') + tx(206, 52, 'target rate', 'end');
+    },
+    'noise-variability': () => {
+      const r = rng(13); let s = '';
+      for (let row = 0; row < 3; row++) for (let x = 12; x < 210; x += 6) if (r() < .22) s += ln(x, 8 + row * 9, x, 14 + row * 9, 'o');
+      const p = []; let y = 0; for (let x = 12; x <= 210; x += 2) { y = .82 * y + (r() - .5) * 9; p.push([x, 74 + y]); }
+      return s + pl(p) + ln(12, 74, 210, 74, 'd t') + tx(210, 106, 'trial to trial', 'end');
+    },
+    'conduction-delays': () => {
+      let s = ci(24, 48, 10, 'p') + ci(196, 48, 10, 'p') + ln(34, 48, 186, 48);
+      [42, 64, 86, 130, 152, 172].forEach(x => s += `<rect class="o p" x="${x}" y="44" width="14" height="8" rx="3"/>`);
+      s += pl([[100, 48], [104, 48], [108, 30], [112, 56], [116, 48], [124, 48]], 'a');
+      s += pl([[34, 70], [34, 76], [186, 76], [186, 70]], 't') + tx(110, 92, 'Δt = distance / speed', 'middle');
+      return s;
+    }
+  };
+  const glyph = id => G[id] ? `<svg class="glyph" viewBox="0 0 220 110" aria-hidden="true">${G[id]()}</svg>` : '';
+
+  /* ---------- layout ---------- */
+  const svg = document.getElementById('map'), layer = document.getElementById('layer');
+  const mapbox = document.getElementById('mapbox'), panel = document.getElementById('panel');
+  const NS = 'http://www.w3.org/2000/svg';
+  const mk = (tag, attrs, parent) => { const el = document.createElementNS(NS, tag); for (const k in attrs) el.setAttribute(k, attrs[k]); if (parent) parent.appendChild(el); return el; };
+  const narrowMQ = matchMedia('(max-width: 760px)');
+  const DIM = { H: { w: 1500, h: 700 }, V: { w: 420, h: 1500 } };
+  let mode = narrowMQ.matches ? 'V' : 'H';
+  let base = { x: 0, y: 0, ...DIM[mode] }, vb = { ...base };
+  let level = 'overview';
+
+  function pos(n) {
+    if (n.kind === 'spine') { const i = spine.indexOf(n); return mode === 'H' ? [90 + 120 * i, 290] : [46, 70 + 100 * i]; }
+    return n[mode];
+  }
+
+  function pathFor(e) {
+    const [ax, ay] = pos(byId[e.from]), [bx, by] = pos(byId[e.to]);
+    if (e.kind === 'spine' || e.kind === 'compose') return `M${ax},${ay} L${bx},${by}`;
+    if (e.kind === 'branch') return mode === 'H' ? `M${ax},${ay} C${ax},${ay + 80} ${bx},${by - 70} ${bx},${by}` : `M${ax},${ay} C${ax},${ay + 70} ${bx - 90},${by} ${bx},${by}`;
+    return mode === 'H' ? `M${ax},${ay - 10} C${ax},${ay - 150} ${bx},${by + 140} ${bx},${by + 10}` : `M${ax + 8},${ay} C${ax + 120},${ay - 60} ${bx + 160},${by + 40} ${bx + 8},${by}`;
+  }
+
+  let edgeEls = {}, opEls = {}, nodeEls = {};
+  function draw() {
+    base = { x: 0, y: 0, ...DIM[mode] };
+    vb = { ...base };
+    svg.setAttribute('viewBox', `0 0 ${base.w} ${base.h}`);
+    mapbox.style.aspectRatio = `${base.w} / ${base.h}`;
+    document.getElementById('plateno').textContent = mode === 'H' ? 'detail ←   → parsimony' : 'detail ↑ · parsimony ↓';
+    layer.innerHTML = ''; edgeEls = {}; opEls = {}; nodeEls = {};
+    const gEdges = mk('g', {}, layer), gOps = mk('g', {}, layer), gNodes = mk('g', {}, layer);
+
+    if (mode === 'H') { mk('line', { class: 'band-rule', x1: 30, y1: 594, x2: 1470, y2: 594 }, gEdges); mk('text', { class: 'band-label', x: 34, y: 586 }, gEdges).textContent = 'MODULATORS'; }
+    else { mk('line', { class: 'band-rule', x1: 10, y1: 1265, x2: 410, y2: 1265 }, gEdges); mk('text', { class: 'band-label', x: 14, y: 1287 }, gEdges).textContent = 'MODULATORS'; }
+
+    E.forEach(e => {
+      const g = mk('g', { class: 'el edge ' + e.kind, 'data-id': e.id }, gEdges);
+      const d = pathFor(e);
+      mk('path', { class: 'stroke', d }, g);
+      if (e.kind === 'compose') mk('path', { class: 'inner', d }, g);
+      const hit = mk('path', { class: 'hit', d, tabindex: e.kind === 'mod' ? -1 : 0, role: 'button', 'aria-label': e.op || ('modulates ' + nm(byId[e.to])) }, g);
+      g.addEventListener('click', ev => { ev.stopPropagation(); if (dragMoved) return; selectEdge(e.id); });
+      hit.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); selectEdge(e.id); } });
+      g.addEventListener('pointerenter', () => opEls[e.id] && opEls[e.id].classList.add('hot'));
+      g.addEventListener('pointerleave', () => opEls[e.id] && !(sel && sel.id === e.id) && opEls[e.id].classList.remove('hot'));
+      edgeEls[e.id] = g;
+      if (mode === 'H' && (e.kind === 'spine' || e.kind === 'compose')) {
+        const [ax] = pos(byId[e.from]), [bx] = pos(byId[e.to]), mx = (ax + bx) / 2;
+        const t = mk('text', { class: 'op el', x: mx, y: 318, 'text-anchor': 'middle' }, gOps);
+        e.op.split(' ').forEach((w, i) => mk('tspan', { x: mx, dy: i ? 13 : 0 }, t).textContent = w);
+        opEls[e.id] = t;
+      }
+    });
+
+    // lens
+    const lens = byId['dynamical-systems'];
+    const gl = mk('g', { class: 'el lens', 'data-id': lens.id, tabindex: 0, role: 'button', 'aria-label': lens.name }, gNodes);
+    if (mode === 'H') {
+      mk('path', { class: 'bracket', d: 'M90,86 L90,74 L1290,74 L1290,86' }, gl);
+      spine.forEach(n => { const [x] = pos(n); mk('line', { x1: x, y1: 74, x2: x, y2: 80 }, gl); });
+      const t = mk('text', { x: 690, y: 60, 'text-anchor': 'middle' }, gl); t.textContent = 'DYNAMICAL SYSTEMS ANALYSIS · A LENS ON EVERY LEVEL';
+      mk('rect', { class: 'hit', x: 90, y: 40, width: 1200, height: 50 }, gl);
+    } else {
+      mk('path', { class: 'bracket', d: 'M28,70 L18,70 L18,1070 L28,1070' }, gl);
+      const t = mk('text', { x: 10, y: 570, 'text-anchor': 'middle', transform: 'rotate(-90 10 570)' }, gl); t.textContent = 'DYNAMICAL SYSTEMS ANALYSIS';
+      mk('rect', { class: 'hit', x: 0, y: 70, width: 26, height: 1000 }, gl);
+    }
+    nodeEls[lens.id] = gl; bindNode(gl, lens.id);
+
+    N.filter(n => n.kind !== 'lens').forEach(n => {
+      const [x, y] = pos(n);
+      const g = mk('g', { class: 'el node ' + n.kind, 'data-id': n.id, tabindex: 0, role: 'button', 'aria-label': nm(n) }, gNodes);
+      const r = n.kind === 'spine' ? 6.5 : 6;
+      mk('circle', { class: 'ring', cx: x, cy: y, r: r + 6 }, g);
+      mk('circle', { class: 'dot', cx: x, cy: y, r }, g);
+      mk('circle', { class: 'hit', cx: x, cy: y, r: 16 }, g);
+      const hasEx = true;
+      if (n.kind === 'spine') {
+        if (mode === 'H') {
+          const lg = mk('g', { transform: `translate(${x + 10},${y - 12}) rotate(-36)` }, g);
+          mk('text', { class: 'name', x: 0, y: 0 }, lg).textContent = n.name;
+          mk('text', { class: 'scale', x: 2, y: 14 }, lg).textContent = n.scale + (hasEx ? '' : '  · planned');
+          mk('rect', { class: 'hit', x: -4, y: -16, width: 250, height: 34 }, lg);
+          mk('text', { class: 'here-tag', x, y: y + 66, 'text-anchor': 'middle' }, g).textContent = 'YOU ARE HERE';
+        } else {
+          mk('text', { class: 'name', x: x + 16, y: y + 4 }, g).textContent = n.name;
+          mk('text', { class: 'scale', x: x + 16, y: y + 19 }, g).textContent = n.scale + (hasEx ? '' : '  · planned');
+          mk('rect', { class: 'hit', x: x - 14, y: y - 14, width: 320, height: 38 }, g);
+          mk('text', { class: 'here-tag', x: x + 16, y: y - 13 }, g).textContent = 'YOU ARE HERE';
+        }
+      } else {
+        const lines = n.name.slice();
+        if (n.kind === 'branch' && !hasEx) lines.push(null);
+        lines.forEach((line, i) => {
+          const isPh = line === null;
+          const attrs = mode === 'H' ? { x, y: y + 24 + i * 16, 'text-anchor': 'middle' } : { x: x + 13, y: y + 5 + i * 15 };
+          mk('text', { class: isPh ? 'ph' : 'name', ...attrs }, g).textContent = isPh ? 'explainer planned' : line;
+        });
+        if (mode === 'H') mk('rect', { class: 'hit', x: x - 75, y: y - 14, width: 150, height: 34 + lines.length * 16 }, g);
+        else mk('rect', { class: 'hit', x: x - 14, y: y - 14, width: 165, height: 24 + lines.length * 15 }, g);
+        mk('text', { class: 'here-tag', ...(mode === 'H' ? { x, y: y - 16, 'text-anchor': 'middle' } : { x: x + 13, y: y - 12 }) }, g).textContent = 'YOU ARE HERE';
+      }
+      nodeEls[n.id] = g; bindNode(g, n.id);
+    });
+    if (sel) applySel(false);
+  }
+
+  function bindNode(g, id) {
+    g.addEventListener('click', ev => { ev.stopPropagation(); if (dragMoved) return; selectNode(id); });
+    g.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); selectNode(id); } });
+  }
+
+  /* ---------- selection ---------- */
+  let sel = null, hereId = null;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function clearMarks() {
+    svg.classList.remove('has-sel');
+    layer.querySelectorAll('.on, .show, .sel').forEach(el => el.classList.remove('on', 'show', 'sel'));
+    Object.values(opEls).forEach(t => t.classList.remove('hot'));
+  }
+  function incident(id) { return E.filter(e => e.from === id || e.to === id); }
+  function applySel(withPulse) {
+    clearMarks();
+    if (!sel) return;
+    svg.classList.add('has-sel');
+    let nodes, edges;
+    if (sel.type === 'node') { edges = incident(sel.id); nodes = new Set([sel.id]); edges.forEach(e => { nodes.add(e.from); nodes.add(e.to); }); }
+    else { const e = eById[sel.id]; edges = [e]; nodes = new Set([e.from, e.to]); }
+    nodes.forEach(id => nodeEls[id] && nodeEls[id].classList.add('on'));
+    edges.forEach(e => { const el = edgeEls[e.id]; el.classList.add('on'); if (e.kind === 'mod') el.classList.add('show'); if (opEls[e.id]) opEls[e.id].classList.add('on', 'hot'); });
+    if (sel.type === 'node') nodeEls[sel.id].classList.add('sel');
+    if (hereId && nodeEls[hereId]) nodeEls[hereId].classList.add('here');
+    if (withPulse) (sel.type === 'node' ? edges.filter(e => e.from === sel.id) : edges).forEach(e => pulse(e.id));
+  }
+  function pulse(eid) {
+    if (reduce) return;
+    const src = edgeEls[eid] && edgeEls[eid].querySelector('path.stroke'); if (!src) return;
+    const len = src.getTotalLength(); if (!len) return;
+    const p = mk('path', { class: 'pulse' + (eById[eid].kind === 'mod' ? ' mod-pulse' : ''), d: src.getAttribute('d') }, layer.firstChild);
+    p.style.strokeDasharray = `18 ${len + 20}`;
+    const anim = p.animate([{ strokeDashoffset: 18, opacity: .9 }, { strokeDashoffset: -len, opacity: .25 }], { duration: 900 + len * 1.3, easing: 'cubic-bezier(.4,0,.2,1)' });
+    anim.onfinish = () => p.remove();
+  }
+  function focusPoint() {
+    if (!sel) return null;
+    if (sel.type === 'node') {
+      if (sel.id === 'dynamical-systems') return mode === 'H' ? [690, 150] : [100, 570];
+      return pos(byId[sel.id]);
+    }
+    const e = eById[sel.id], a = pos(byId[e.from]), b = pos(byId[e.to]);
+    return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  }
+  function selectNode(id, opts) {
+    if (!(opts && opts.keepHere)) { if (hereId && nodeEls[hereId]) nodeEls[hereId].classList.remove('here'); hereId = null; }
+    sel = { type: 'node', id };
+    applySel(true); renderNode(id); openPanel();
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+  }
+  function selectEdge(eid) {
+    const e = eById[eid];
+    if (e.kind === 'mod') { selectNode(e.from); return; }
+    if (hereId && nodeEls[hereId]) nodeEls[hereId].classList.remove('here'); hereId = null;
+    sel = { type: 'edge', id: eid };
+    applySel(true); renderEdge(eid); openPanel();
+    try { history.replaceState(null, '', '#' + eid); } catch (err) {}
+  }
+  function clearSel() {
+    sel = null; if (hereId && nodeEls[hereId]) nodeEls[hereId].classList.remove('here'); hereId = null;
+    clearMarks();
+    if (mode === 'H') { closePanel(); setLevel('overview'); }
+    else { renderDefault(); mapbox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); }
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  }
+
+  /* ---------- reading card ---------- */
+  const kindLabel = { spine: 'Main spine', branch: 'Side branch', mod: 'Modulator', lens: 'Transversal lens' };
+  function openPanel() {
+    panel.classList.remove('closed');
+    if (mode === 'H') { const f = focusPoint(); setLevel('detail', f); }
+    else panel.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  }
+  function closePanel() { panel.classList.add('closed'); }
+  const topBar = (kick, title, sub) => `<div class="panel-top"><div><div class="kicker">${kick}</div><h2>${esc(title)}</h2>${sub ? `<div class="path-row">${sub}</div>` : ''}</div><button type="button" class="closer" data-clear aria-label="Close">×</button></div>`;
+  function exList(list) {
+    return '<ul class="ex">' + list.map(x => x.u
+      ? `<li><a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.t)}</a><span class="st">open ↗</span></li>`
+      : `<li><span class="ph">${esc(x.t)}</span><span class="st">${x.coming ? 'being wired' : 'planned'}</span></li>`).join('') + '</ul>';
+  }
+  const moveBtn = (dir, attrs, label, sub) => `<button type="button" class="move" ${attrs}><span class="dir">${dir}</span><span class="what">${esc(label)}${sub ? ` <i>· ${esc(sub)}</i>` : ''}</span></button>`;
+
+  function plateBlock(id) {
+    const ps = PLATES[id];
+    if (!ps) return id === 'dynamical-systems' ? '<section><h3>Plates</h3><p class="note">The lens has no plate of its own; every plate links its dynamical-systems terms to the Vector Field Studio.</p></section>' : '';
+    let h = '<section><h3>' + (ps.length > 1 ? 'Plates' : 'Plate') + '</h3><ul class="ex plates">' + ps.map(p => `<li><a href="${p.f}">${esc(p.t)}</a><span class="st">Plate ${p.n}</span></li>`).join('') + '</ul></section>';
+    ps.forEach(p => {
+      const lab = ps.length > 1 ? ` · ${esc(p.t)}` : '';
+      h += `<details class="box"><summary>Equations${lab}</summary><div class="eqbox">${p.eq}</div></details>`;
+      h += `<details class="box"><summary>Pseudocode${lab}</summary><pre class="pseudo">${esc(p.ps)}</pre></details>`;
+    });
+    return h;
+  }
+  function renderNode(id) {
+    const n = byId[id];
+    let kick = kindLabel[n.kind];
+    if (n.kind === 'spine') kick += ` · level ${spine.indexOf(n) + 1} of ${spine.length}`;
+    const up = E.find(e => (e.kind === 'spine' || e.kind === 'compose') && e.to === id);
+    const down = E.find(e => (e.kind === 'spine' || e.kind === 'compose') && e.from === id);
+    let moves = '';
+    if (up) moves += moveBtn('Zoom in', `data-edge="${up.id}"`, nm(byId[up.from]), up.op);
+    if (down) moves += moveBtn('Zoom out', `data-edge="${down.id}"`, nm(byId[down.to]), down.op);
+    E.filter(e => e.kind === 'branch' && (e.from === id || e.to === id)).forEach(e => moves += moveBtn(e.from === id ? 'Branch' : 'Back to', `data-edge="${e.id}"`, nm(byId[e.from === id ? e.to : e.from]), e.op));
+    E.filter(e => e.kind === 'mod' && e.to === id).forEach(e => moves += moveBtn('Modulated', `data-node="${e.from}"`, nm(byId[e.from])));
+    (n.targets || []).forEach(t => moves += moveBtn('Acts on', `data-node="${t}"`, nm(byId[t])));
+    if (n.kind === 'lens') moves += '<p class="note">Applies at every level of the spine; select any node and read it through this lens.</p>';
+    panel.innerHTML = topBar(kick, nm(n), n.scale ? esc(n.scale) : '') +
+      `<figure class="fig">${glyph(id)}</figure>` +
+      `<ul class="bul">${n.b.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` +
+      (n.foot ? `<p class="foot">${esc(n.foot)}</p>` : '') +
+      plateBlock(id) +
+      (n.ex.filter(x => !x.planned).length ? `<section><h3>Other explainers</h3>${exList(n.ex.filter(x => !x.planned))}</section>` : '') +
+      (moves ? `<section><h3>Moves from here</h3><div class="moves">${moves}</div></section>` : '');
+    wirePanel();
+  }
+  function renderEdge(eid) {
+    const e = eById[eid], a = byId[e.from], b = byId[e.to], c = conf[e.conf];
+    const kick = e.kind === 'compose' ? 'Composition' : e.kind === 'spine' ? 'Simplification' : 'Side branch';
+    panel.innerHTML = topBar(kick, e.op.charAt(0).toUpperCase() + e.op.slice(1), `${esc(nm(a))} → ${esc(nm(b))}`) +
+      `<figure class="fig pair">${glyph(a.id)}<span class="to">→</span>${glyph(b.id)}</figure>` +
+      `<dl class="fields">
+        <div><dt>Keeps</dt><dd>${esc(e.keeps)}</dd></div>
+        <div><dt>Loses</dt><dd>${esc(e.loses)}</dd></div>
+        <div><dt>Trust it when</dt><dd>${esc(e.trust)}</dd></div>
+        <div class="ask"><dt>Ask yourself</dt><dd>${esc(e.ask)}</dd></div>
+      </dl>` +
+      `<div><h3>Originators</h3><p class="orig"><span class="g ${c[1]}" title="${c[2]}">${c[0]}</span><span>${esc(e.orig)}${e.disputed ? ' <span title="disputed in the literature">†</span>' : ''}</span></p></div>` +
+      (e.note ? `<p class="note">${esc(e.note)}</p>` : '') +
+      plateBlock(eid) +
+      `<section><h3>Go to</h3><div class="moves">${moveBtn('From', `data-node="${a.id}"`, nm(a))}${moveBtn('To', `data-node="${b.id}"`, nm(b))}</div></section>`;
+    wirePanel();
+  }
+  function renderDefault() {
+    const nPlates = Object.values(PLATES).reduce((a, p) => a + p.length, 0);
+    panel.innerHTML = topBar('How to read this plate', 'Select any node or edge', '') +
+      `<ul class="bul">
+        <li>${mode === 'H' ? 'Position from left to right' : 'Position from top to bottom'} is the level of description: detail first, parsimony last.</li>
+        <li>A node shows what a model is; an edge shows what a simplification keeps, what it loses and when to trust it. Each opens onto a plate, a short page with one interactive model.</li>
+        <li>Side branches leave the spine towards functional and structural descriptions. Modulators sit in their own row; their dashed links appear when you select one, or a node they act on.</li>
+        <li>The bracket is a lens, applicable at every level.</li>
+      </ul>
+      <div class="glyph-key"><h3>Confidence in attributions</h3>
+        <span><span class="g g-est">●</span> established in the literature</span>
+        <span><span class="g g-lik">◐</span> likely, still to be checked against the original</span>
+        <span><span class="g g-unv">○</span> unverified</span>
+        <span>† the literature itself disputes the attribution</span>
+      </div>
+      <p class="stat">${nPlates} plates: one for every node and edge, two for long-term plasticity. Each card links its plate and shows its equations and pseudocode.</p>
+      <p class="note">If unsure where to begin, start at the Integrate-and-Fire Neuron.</p>`;
+    wirePanel();
+  }
+  function wirePanel() {
+    panel.querySelectorAll('.move').forEach(btn => btn.addEventListener('click', () => btn.dataset.edge ? selectEdge(btn.dataset.edge) : selectNode(btn.dataset.node)));
+    const c = panel.querySelector('[data-clear]');
+    if (c) c.addEventListener('click', () => { if (sel) clearSel(); else if (mode === 'H') closePanel(); else mapbox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); });
+  }
+
+  /* ---------- two magnifications ---------- */
+  const zOver = document.getElementById('z-over'), zDetail = document.getElementById('z-detail');
+  let anim = null;
+  function apply() { svg.setAttribute('viewBox', `${vb.x.toFixed(2)} ${vb.y.toFixed(2)} ${vb.w.toFixed(2)} ${vb.h.toFixed(2)}`); }
+  function animateTo(t) {
+    if (anim) cancelAnimationFrame(anim);
+    if (reduce) { vb = { ...t }; apply(); return; }
+    const s = { ...vb }, t0 = performance.now(), dur = 700;
+    const ease = u => u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+    const step = now => { const u = Math.min(1, (now - t0) / dur), k = ease(u); vb = { x: s.x + (t.x - s.x) * k, y: s.y + (t.y - s.y) * k, w: s.w + (t.w - s.w) * k, h: s.h + (t.h - s.h) * k }; apply(); if (u < 1) anim = requestAnimationFrame(step); };
+    anim = requestAnimationFrame(step);
+  }
+  function setLevel(l, focus) {
+    if (mode !== 'H') return;
+    level = l;
+    zOver.setAttribute('aria-pressed', l === 'overview'); zDetail.setAttribute('aria-pressed', l === 'detail');
+    svg.classList.toggle('zoomed', l === 'detail');
+    mapbox.classList.toggle('pannable', l === 'detail');
+    if (l === 'overview') { animateTo(base); return; }
+    const w = base.w / 2, h = base.h / 2;
+    const mw = mapbox.clientWidth || 1, dw = panel.classList.contains('closed') ? 0 : panel.offsetWidth;
+    const visFrac = Math.max(.4, (mw - dw) / mw);
+    const f = focus || [vb.x + vb.w / 2, vb.y + vb.h / 2];
+    let x = f[0] - w * visFrac / 2, y = f[1] - h / 2;
+    x = Math.max(-40, Math.min(base.w - w * visFrac + 40, x));
+    y = Math.max(-20, Math.min(base.h - h + 20, y));
+    animateTo({ x, y, w, h });
+  }
+  zOver.addEventListener('click', () => setLevel('overview'));
+  zDetail.addEventListener('click', () => setLevel('detail', focusPoint()));
+
+  // a pinch on the trackpad arrives as a wheel event with ctrlKey; accumulate it so only a deliberate gesture switches level
+  let acc = 0, accTimer = null;
+  mapbox.addEventListener('wheel', ev => {
+    if (mode !== 'H' || !ev.ctrlKey) return;
+    ev.preventDefault();
+    acc += ev.deltaY; clearTimeout(accTimer); accTimer = setTimeout(() => acc = 0, 300);
+    if (acc < -45 && level !== 'detail') { acc = 0; setLevel('detail', focusPoint()); }
+    else if (acc > 45 && level !== 'overview') { acc = 0; setLevel('overview'); }
+  }, { passive: false });
+
+  // drag to pan, only in detail
+  let drag = null, dragMoved = false;
+  svg.addEventListener('pointerdown', ev => { if (mode === 'H' && level === 'detail') { drag = { x: ev.clientX, y: ev.clientY, id: ev.pointerId }; } dragMoved = false; });
+  svg.addEventListener('pointermove', ev => {
+    if (!drag) return;
+    const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+    if (!dragMoved && Math.hypot(dx, dy) < 5) return;
+    if (!dragMoved) { dragMoved = true; mapbox.classList.add('dragging'); try { svg.setPointerCapture(drag.id); } catch (e) {} }
+    const s = vb.w / svg.getBoundingClientRect().width;
+    vb.x -= dx * s; vb.y -= dy * s; drag.x = ev.clientX; drag.y = ev.clientY; apply();
+  });
+  const endDrag = () => { drag = null; mapbox.classList.remove('dragging'); setTimeout(() => { dragMoved = false; }, 0); };
+  svg.addEventListener('pointerup', endDrag); svg.addEventListener('pointercancel', endDrag);
+  svg.addEventListener('click', () => { if (dragMoved) return; if (sel) clearSel(); });
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && sel) clearSel(); });
+  document.getElementById('howto').addEventListener('click', () => { if (sel) { sel = null; clearMarks(); } renderDefault(); panel.classList.remove('closed'); setLevel('overview'); });
+
+  /* ---------- print ---------- */
+  const root = document.documentElement, bp = document.getElementById('p-plate'), bc = document.getElementById('p-cyan');
+  function setPrint(p, save) {
+    if (p === 'cyan') root.setAttribute('data-print', 'cyan'); else root.removeAttribute('data-print');
+    bp.setAttribute('aria-pressed', p !== 'cyan'); bc.setAttribute('aria-pressed', p === 'cyan');
+    if (save) try { localStorage.setItem('atlas-print', p); } catch (e) {}
+  }
+  bp.addEventListener('click', () => setPrint('plate', true));
+  bc.addEventListener('click', () => setPrint('cyan', true));
+  try { setPrint(localStorage.getItem('atlas-print') === 'cyan' ? 'cyan' : 'plate'); } catch (e) { setPrint('plate'); }
+
+  /* ---------- preface ---------- */
+  const tb = document.getElementById('titlebtn'), pbox = document.getElementById('preface-box');
+  const setPreface = open => { pbox.hidden = !open; tb.setAttribute('aria-expanded', open); };
+  tb.addEventListener('click', ev => { ev.stopPropagation(); setPreface(pbox.hidden); });
+  document.getElementById('preface-close').addEventListener('click', () => { setPreface(false); tb.focus(); });
+  pbox.addEventListener('click', ev => ev.stopPropagation());
+  document.addEventListener('click', () => { if (!pbox.hidden) setPreface(false); });
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !pbox.hidden) { setPreface(false); tb.focus(); } });
+
+  /* ---------- start ---------- */
+  narrowMQ.addEventListener('change', () => {
+    mode = narrowMQ.matches ? 'V' : 'H'; level = 'overview';
+    svg.classList.remove('zoomed'); mapbox.classList.remove('pannable');
+    draw();
+    if (mode === 'V' && !sel) renderDefault();
+    if (mode === 'H' && !sel) closePanel();
+  });
+  draw();
+  if (mode === 'V') { renderDefault(); panel.classList.remove('closed'); }
+  const h = decodeURIComponent((location.hash || '').slice(1));
+  if (h && byId[h]) { hereId = h; selectNode(h, { keepHere: true }); }
+  else if (h && eById[h]) selectEdge(h);
+})();
+</script>
+
+</body></html>

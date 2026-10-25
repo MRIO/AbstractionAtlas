@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Threshold and Reset</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Spectral+SC:wght@500&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap">
+<style>:root {
+  --paper: #e4e6e3;
+  --ink: #191d24;
+  --ink-soft: #565d68;
+  --accent: #1d3b63;
+  --ochre: #94661c;
+  --rule: #191d2433;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .12 0 0 0 0 .16 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --f-display: "Spectral SC", "Cormorant SC", Georgia, serif;
+  --f-text: "Spectral", Georgia, "Times New Roman", serif;
+  --f-mono: "Courier Prime", "Courier New", ui-monospace, monospace;
+  color-scheme: light;
+}
+:root[data-print="cyan"] {
+  --paper: #c7dbec;
+  --ink: #0a2350;
+  --ink-soft: #2f4f7e;
+  --accent: #a2352a;
+  --ochre: #7f5512;
+  --rule: #0a235038;
+  --grain:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .04 0 0 0 0 .14 0 0 0 0 .34 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.00625' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .05 0 0 0 0 .2 0 0 0 0 .48 0 0 0 .8 -.33'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  background-color: var(--paper); background-image: var(--grain);
+  color: var(--ink);
+  font-family: var(--f-text); font-size: 16.5px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 48px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 22px; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.top { display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: space-between; align-items: center; font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; color: var(--ink-soft); border-bottom: 1px solid var(--ink); padding-bottom: 10px; }
+.top a { color: var(--ink); text-decoration: none; text-transform: uppercase; }
+.top a:hover { color: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--ink); }
+.seg button { font-family: var(--f-mono); font-size: 12px; background: transparent; color: var(--ink); border: 0; padding: 4px 11px; cursor: pointer; letter-spacing: .04em; }
+.seg button + button { border-left: 1px solid var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+.strip { display: block; max-width: 460px; }
+.strip svg { width: 100%; height: auto; display: block; overflow: visible; }
+.strip .sd { fill: var(--ink); }
+.strip .bd { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
+.strip .md { fill: var(--paper); stroke: var(--ochre); stroke-width: 1; stroke-dasharray: 1.5 1.5; }
+.strip .sl { stroke: var(--ink); stroke-width: 1.2; }
+.strip .bl { stroke: var(--ink); stroke-width: .7; fill: none; opacity: .6; }
+.strip .hl { stroke: var(--accent); stroke-width: 3.2; fill: none; }
+.strip .hr { fill: none; stroke: var(--accent); stroke-width: 1.4; }
+.strip text { font-family: var(--f-mono); font-size: 7.5px; fill: var(--ink-soft); letter-spacing: .05em; }
+
+.head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 300px); gap: 18px 36px; align-items: end; }
+.kicker { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+h1 { font-family: var(--f-display); font-weight: 500; font-size: clamp(30px, 4.4vw, 48px); line-height: 1.04; letter-spacing: .01em; margin: 6px 0 4px; text-wrap: balance; }
+.sub { font-family: var(--f-mono); font-size: 12.5px; color: var(--ink-soft); }
+.glyphbox { margin: 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 6px 0; display: flex; align-items: center; gap: 6px; }
+.glyphbox .to { font-family: var(--f-mono); color: var(--ink-soft); }
+.glyphbox.pair .glyph { max-width: 46%; }
+
+.prose { max-width: 70ch; display: grid; gap: 10px; }
+.prose p { margin: 0; }
+.prose a.term { color: inherit; text-decoration: underline dotted var(--accent); text-underline-offset: 3px; }
+
+.widget { border: 1px solid var(--ink); padding: 5px; position: relative; }
+.widget::before { content: ""; position: absolute; inset: 3px; border: 1px solid var(--rule); pointer-events: none; }
+.widget-in { padding: 14px 16px 16px; display: grid; gap: 14px; }
+.panels { display: grid; gap: 16px 22px; align-items: start; }
+.panel { min-width: 0; display: grid; gap: 4px; }
+.panel h2 { margin: 0; font-family: var(--f-mono); font-weight: 400; font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.panel .cv { position: relative; width: 100%; }
+.panel canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.readout { font-family: var(--f-mono); font-size: 12px; color: var(--ink-soft); min-height: 1.4em; font-variant-numeric: tabular-nums; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: end; border-top: 1px solid var(--rule); padding-top: 12px; }
+.ctl { display: grid; gap: 3px; font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-soft); letter-spacing: .04em; min-width: 180px; }
+.ctl .lab { display: flex; justify-content: space-between; gap: 12px; }
+.ctl .val { color: var(--ink); font-variant-numeric: tabular-nums; }
+.ctl input[type=range] { width: 100%; accent-color: var(--accent); }
+.controls > * { max-width: 100%; }
+.ctl .seg { flex-wrap: wrap; }
+.ctl .seg button { border-bottom: 1px solid var(--ink); margin-bottom: -1px; }
+.btn { font-family: var(--f-mono); font-size: 12px; letter-spacing: .04em; background: transparent; color: var(--ink); border: 1px solid var(--ink); padding: 6px 14px; cursor: pointer; }
+.btn:hover { background: var(--ink); color: var(--paper); }
+.hint { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-soft); }
+
+.fields { display: grid; gap: 0; margin: 0; max-width: 82ch; border-top: 1px solid var(--ink); }
+.fields div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px; border-bottom: 1px solid var(--rule); padding: 9px 0; }
+.fields dt { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); padding-top: 3px; }
+.fields dd { margin: 0; }
+.fields .ask dd { font-style: italic; }
+
+details.box { border-top: 1px solid var(--ink); max-width: 82ch; }
+details.box + details.box { border-top: 1px solid var(--rule); }
+details.box summary { cursor: pointer; list-style: none; padding: 10px 0; font-family: var(--f-mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; display: flex; justify-content: space-between; }
+details.box summary::-webkit-details-marker { display: none; }
+details.box summary::after { content: "+"; font-size: 15px; line-height: 1; }
+details.box[open] summary::after { content: "−"; }
+details.box .inner { padding: 2px 0 16px; display: grid; gap: 10px; }
+.eq { font-family: var(--f-text); font-size: 17px; line-height: 1.7; overflow-x: auto; }
+.eq div { white-space: nowrap; }
+.eq .note { white-space: normal; font-size: 14.5px; color: var(--ink-soft); }
+.eq i { font-style: italic; }
+pre.pseudo { font-family: var(--f-mono); font-size: 13px; line-height: 1.6; margin: 0; white-space: pre-wrap; overflow-x: auto; }
+.flow { max-width: 420px; }
+.flow svg { width: 100%; height: auto; display: block; }
+.flow rect, .flow path.d { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
+.flow path.a { fill: none; stroke: var(--ink); stroke-width: 1; }
+.flow text { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink); }
+.flow text.s { fill: var(--ink-soft); font-size: 9.5px; }
+
+footer.foot { border-top: 3px double var(--ink); padding-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 36px; font-size: 15px; }
+footer h3 { margin: 0 0 6px; font-family: var(--f-mono); font-weight: 400; font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+footer li .d { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-right: 6px; }
+.g { font-size: 13px; margin-right: 6px; }
+.g-est { color: var(--ink); } .g-lik { color: var(--accent); } .g-unv { color: var(--ochre); }
+.seq { display: flex; justify-content: space-between; gap: 16px; font-family: var(--f-mono); font-size: 12px; letter-spacing: .04em; border-top: 1px solid var(--rule); padding-top: 10px; }
+.seq a { text-decoration: none; }
+
+.glyph { width: 100%; max-width: 300px; height: auto; display: block; color: var(--ink); fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.glyph text { fill: var(--ink-soft); stroke: none; font-family: var(--f-mono); font-size: 9px; }
+.glyph .f { fill: currentColor; } .glyph .p { fill: var(--paper); } .glyph .a { stroke: var(--accent); } .glyph .af { fill: var(--accent); stroke: none; }
+.glyph .o { stroke: var(--ochre); } .glyph .of { fill: var(--ochre); stroke: none; } .glyph .ow { fill: var(--ochre); stroke: none; opacity: .18; }
+.glyph .d { stroke-dasharray: 3 3; } .glyph .t { stroke-width: .8; opacity: .55; } .glyph .n { stroke: none; }
+
+@media (max-width: 760px) {
+  .head { grid-template-columns: minmax(0, 1fr); }
+  .glyphbox { max-width: 320px; }
+  .panels { grid-template-columns: minmax(0, 1fr) !important; }
+  .fields div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+}
+</style></head><body>
+<div class="wrap">
+<div class="top"><a href="../index.html#spike-abstraction">← The Abstraction Atlas</a><span>Plate IX</span><div class="seg" role="group" aria-label="Print"><button type="button" id="p-plate" aria-pressed="true">Plate</button><button type="button" id="p-cyan" aria-pressed="false">Cyanotype</button></div></div>
+<a class="strip" href="../index.html#spike-abstraction"><svg viewBox="0 -4 440 74" role="img" aria-label="Position on the Atlas"><line class="sl" x1="20" y1="16" x2="60" y2="16"/><line class="sl" x1="60" y1="16" x2="100" y2="16"/><line class="sl" x1="100" y1="16" x2="140" y2="16"/><line class="sl" x1="140" y1="16" x2="180" y2="16"/><line class="sl" x1="180" y1="16" x2="220" y2="16"/><line class="sl" x1="220" y1="16" x2="260" y2="16"/><line class="sl" x1="260" y1="16" x2="300" y2="16"/><line class="sl" x1="300" y1="16" x2="340" y2="16"/><line class="sl" x1="340" y1="16" x2="380" y2="16"/><line class="sl" x1="380" y1="16" x2="420" y2="16"/><path class="bl" d="M260,16 L270,40"/><path class="bl" d="M220,16 L214,40"/><path class="bl" d="M340,16 L340,40"/><path class="bl" d="M420,16 L408,40"/><path class="bl" d="M420,16 L432,40"/><path class="hl" d="M140,16 L180,16"/><circle class="sd" cx="20" cy="16" r="3.2"/><circle class="sd" cx="60" cy="16" r="3.2"/><circle class="sd" cx="100" cy="16" r="3.2"/><circle class="sd" cx="140" cy="16" r="3.2"/><circle class="sd" cx="180" cy="16" r="3.2"/><circle class="sd" cx="220" cy="16" r="3.2"/><circle class="sd" cx="260" cy="16" r="3.2"/><circle class="sd" cx="300" cy="16" r="3.2"/><circle class="sd" cx="340" cy="16" r="3.2"/><circle class="sd" cx="380" cy="16" r="3.2"/><circle class="sd" cx="420" cy="16" r="3.2"/><circle class="bd" cx="270" cy="40" r="2.8"/><circle class="bd" cx="214" cy="40" r="2.8"/><circle class="bd" cx="340" cy="40" r="2.8"/><circle class="bd" cx="408" cy="40" r="2.8"/><circle class="bd" cx="432" cy="40" r="2.8"/><circle class="md" cx="40" cy="62" r="2.8"/><circle class="md" cx="114" cy="62" r="2.8"/><circle class="md" cx="188" cy="62" r="2.8"/><circle class="md" cx="262" cy="62" r="2.8"/><circle class="md" cx="336" cy="62" r="2.8"/><circle class="md" cx="410" cy="62" r="2.8"/><text x="0" y="5">DETAIL</text><text x="440" y="5" text-anchor="end">PARSIMONY</text><text x="0" y="52">MODULATORS</text></svg></a>
+<header class="head"><div><div class="kicker">Edge plate · Simplification</div><h1>Threshold and Reset</h1><div class="sub">Reduced Neuron Models → Integrate-and-Fire Neuron</div></div><figure class="glyphbox pair"><svg class="glyph" viewBox="0 0 220 110" aria-hidden="true"><path class="" d="M18.0,100.0 L212.0,100.0 M206.6,102.6 L212.0,100.0 L206.6,97.4"/><path class="" d="M18.0,100.0 L18.0,6.0 M20.6,11.4 L18.0,6.0 L15.4,11.4"/><path class="" d="M17.5,9.6 L19.6,15.5 L21.7,21.1 L23.8,26.4 L25.9,31.3 L28.0,36.0 L30.1,40.4 L32.2,44.4 L34.3,48.2 L36.4,51.7 L38.5,54.9 L40.6,57.9 L42.7,60.6 L44.8,63.0 L46.9,65.3 L49.0,67.2 L51.1,69.0 L53.2,70.6 L55.3,71.9 L57.4,73.0 L59.5,74.0 L61.6,74.7 L63.7,75.3 L65.8,75.7 L67.9,75.9 L70.0,76.0 L72.1,75.9 L74.2,75.7 L76.3,75.4 L78.4,74.9 L80.5,74.3 L82.6,73.6 L84.7,72.8 L86.8,71.8 L88.9,70.8 L91.0,69.7 L93.1,68.6 L95.2,67.4 L97.3,66.1 L99.4,64.7 L101.5,63.3 L103.6,61.9 L105.7,60.5 L107.8,59.0 L109.9,57.5 L112.0,56.0 L114.1,54.5 L116.2,53.0 L118.3,51.5 L120.4,50.1 L122.5,48.7 L124.6,47.3 L126.7,45.9 L128.8,44.6 L130.9,43.4 L133.0,42.2 L135.1,41.2 L137.2,40.2 L139.3,39.2 L141.4,38.4 L143.5,37.7 L145.6,37.1 L147.7,36.6 L149.8,36.3 L151.9,36.1 L154.0,36.0 L156.1,36.1 L158.2,36.3 L160.3,36.7 L162.4,37.3 L164.5,38.0 L166.6,39.0 L168.7,40.1 L170.8,41.4 L172.9,43.0 L175.0,44.8 L177.1,46.7 L179.2,49.0 L181.3,51.4 L183.4,54.1 L185.5,57.1 L187.6,60.3 L189.7,63.8 L191.8,67.6 L193.9,71.6 L196.0,76.0 L198.1,80.7 L200.2,85.6 L202.3,90.9 L204.4,96.5 L206.5,102.4"/><path class="d" d="M44.8,89.8 L137.2,7.3"/><path class="a" d="M193.9,68.6 L191.8,64.6 L189.7,60.8 L187.6,57.3 L185.5,54.1 L183.4,51.1 L181.3,48.4 L179.2,46.0 L177.1,43.7 L175.0,41.7 L172.9,40.0 L170.8,38.4 L168.7,37.1 L166.6,36.0 L164.5,35.0 L162.4,34.3 L160.3,33.7 L158.2,33.3 L156.1,33.1 L30.1,43.4 L32.2,47.4 L34.3,51.2 L36.4,54.7 L38.5,57.9 L40.6,60.9 L42.7,63.6 L44.8,66.0 L46.9,68.3 L49.0,70.3 L51.1,72.0 L53.2,73.6 L55.3,74.9 L57.4,76.0 L59.5,77.0 L61.6,77.7 L63.7,78.3 L65.8,78.7 L67.9,78.9 Z"/><circle class="p" cx="61.6" cy="74.7" r="3"/><text x="208" y="96" text-anchor="end">v</text><text x="24" y="14" text-anchor="start">w</text></svg><span class="to">→</span><svg class="glyph" viewBox="0 0 220 110" aria-hidden="true"><path class="d" d="M14.0,30.0 L206.0,30.0"/><text x="214" y="33" text-anchor="end">θ</text><path class="" d="M16.0,92.0 L16.0,92.0 L17.5,88.2 L19.0,84.7 L20.5,81.3 L22.0,78.1 L23.5,75.1 L25.0,72.2 L26.5,69.5 L28.0,66.9 L29.5,64.5 L31.0,62.1 L32.5,59.9 L34.0,57.9 L35.5,55.9 L37.0,54.0 L38.5,52.2 L40.0,50.6 L41.5,49.0 L43.0,47.5 L44.5,46.0 L46.0,44.7 L47.5,43.4 L49.0,42.2 L50.5,41.0 L52.0,39.9 L53.5,38.9 L55.0,37.9 L56.5,36.9 L58.0,36.1 L59.5,35.2 L61.0,34.4 L62.5,33.7 L64.0,33.0 L65.5,32.3 L67.0,31.6 L68.5,31.0 L70.0,30.5 L71.5,29.9 L71.5,92.0 L71.5,92.0 L73.0,88.2 L74.5,84.7 L76.0,81.3 L77.5,78.1 L79.0,75.1 L80.5,72.2 L82.0,69.5 L83.5,66.9 L85.0,64.5 L86.5,62.1 L88.0,59.9 L89.5,57.9 L91.0,55.9 L92.5,54.0 L94.0,52.2 L95.5,50.6 L97.0,49.0 L98.5,47.5 L100.0,46.0 L101.5,44.7 L103.0,43.4 L104.5,42.2 L106.0,41.0 L107.5,39.9 L109.0,38.9 L110.5,37.9 L112.0,36.9 L113.5,36.1 L115.0,35.2 L116.5,34.4 L118.0,33.7 L119.5,33.0 L121.0,32.3 L122.5,31.6 L124.0,31.0 L125.5,30.5 L127.0,29.9 L127.0,92.0 L127.0,92.0 L128.5,88.2 L130.0,84.7 L131.5,81.3 L133.0,78.1 L134.5,75.1 L136.0,72.2 L137.5,69.5 L139.0,66.9 L140.5,64.5 L142.0,62.1 L143.5,59.9 L145.0,57.9 L146.5,55.9 L148.0,54.0 L149.5,52.2 L151.0,50.6 L152.5,49.0 L154.0,47.5 L155.5,46.0 L157.0,44.7 L158.5,43.4 L160.0,42.2 L161.5,41.0 L163.0,39.9 L164.5,38.9 L166.0,37.9 L167.5,36.9 L169.0,36.1 L170.5,35.2 L172.0,34.4 L173.5,33.7 L175.0,33.0 L176.5,32.3 L178.0,31.6 L179.5,31.0 L181.0,30.5 L182.5,29.9 L182.5,92.0 L206.0,51.1"/><path class="a" d="M71.5,30.0 L71.5,6.0"/><path class="a" d="M127.0,30.0 L127.0,6.0"/><path class="a" d="M182.5,30.0 L182.5,6.0"/></svg></figure></header>
+<div class="prose"><p>The integrate-and-fire neuron keeps the subthreshold voltage of a neuron and replaces the spike by a rule: when the voltage reaches a threshold, a spike is recorded and the voltage is reset. Repetitive firing is taken as given here, and the question is how much of it survives once the mechanism that generates each spike is removed.</p><p>The two-variable neuron of the previous plates and a leaky integrate-and-fire neuron receive the same current. In the integrate-and-fire trace each spike is drawn as a thin vertical tick, since the model computes no waveform. Change the current and the reset voltage, and compare the firing-rate curves on the right.</p><p>Spike times and firing rates survive the abstraction over a range of currents. The shape of the spike, its afterhyperpolarisation and the slow recovery are gone, and the reset voltage turns out to be a free choice that shifts the whole rate curve.</p></div>
+<section class="widget" aria-label="Interactive model"><div class="widget-in"><div class="panels" style="grid-template-columns:minmax(0,3fr) minmax(0,2fr)"><div class="panel"><h2>Voltage: two-variable model and integrate-and-fire</h2><div class="cv" data-aspect="0.62" data-maxh="480"><canvas id="ov" aria-label="Voltage: two-variable model and integrate-and-fire"></canvas></div><div class="readout" id="ro-ov"></div></div><div class="panel"><h2>Firing rate against current</h2><div class="cv" data-aspect="0.9" data-maxh="480"><canvas id="fi" aria-label="Firing rate against current"></canvas></div><div class="readout" id="ro-fi"></div></div></div><div class="controls" id="controls"></div></div></section>
+<dl class="fields"><div class=""><dt>Keeps</dt><dd>The integration of input and the timing of output spikes.</dd></div><div class=""><dt>Loses</dt><dd>Spike shape, the mechanism that generates it, and subthreshold resonance in the plain leaky model.</dd></div><div class=""><dt>Trust it when</dt><dd>Input varies slowly compared with the width of a spike.</dd></div><div class="ask"><dt>Ask yourself</dt><dd>What does a perfectly sharp threshold assume about how a real cell begins to spike?</dd></div></dl>
+<details class="box"><summary>Equations</summary><div class="inner eq"><div>τ dV/dt = −(V − E<sub>L</sub>) + R I</div>
+<div>if V ≥ θ: record a spike and set V ← V<sub>reset</sub></div>
+<div class="note">Integrate-and-fire parameters: τ = 8 ms, E<sub>L</sub> = −65 mV, θ = −55 mV, R = 1.5 mV per μA/cm², refractory period 5 ms. The two-variable model is stage 2 of Timescale Separation.</div></div></details>
+<details class="box"><summary>Pseudocode</summary><div class="inner"><pre class="pseudo">for each time step dt:
+    two-variable model: update V and n as in Timescale Separation
+    integrate-and-fire: V ← V + dt/τ · (−(V − E_L) + R·I)
+                        if V ≥ θ: draw a tick, V ← V_reset, hold for 5 ms
+firing rate ← number of spikes / duration, for each current</pre><div class="flow"><svg viewBox="0 0 420 172" aria-hidden="true"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" style="fill:var(--ink)"/></marker></defs><rect x="30" y="14" width="200" height="30"/><text x="130" y="33" text-anchor="middle">V ← V + dt/τ · (−(V − E_L) + R·I)</text><path class="a" d="M130,44 L130,62" marker-end="url(#ah)"/><path class="d" d="M130,62 L230,82.0 L130,102 L30,82.0 Z"/><text x="130" y="86.0" text-anchor="middle">V ≥ θ ?</text><path class="a" d="M230,82.0 L276,82.0" marker-end="url(#ah)"/><text class="s" x="238" y="77.0">yes</text><rect x="280" y="67.0" width="130" height="30"/><text x="345" y="86.0" text-anchor="middle">spike; V ← V_reset</text><text class="s" x="136" y="114">no</text><path class="a" d="M130,102 L130,120" marker-end="url(#ah)"/><rect x="30" y="120" width="200" height="30"/><text x="130" y="139" text-anchor="middle">t ← t + dt</text><path class="a" d="M345,97.0 L345,135.0 L230,135.0" marker-end="url(#ah)"/><path class="a" d="M30,135.0 L12,135.0 L12,29.0 L26,29.0" marker-end="url(#ah)"/><text class="s" x="16" y="164">next step</text></svg></div></div></details>
+<footer class="foot"><div><h3>Originators</h3><ul><li><span class="g g-lik" title="likely">◐</span>Lapicque (1907)</li><li><span class="g g-lik" title="likely">◐</span>Repetitive firing with an explicit reset: Stein (1965); Knight (1972); see Brunel and van Rossum (2007)</li></ul></div><div><h3>On the Atlas</h3><ul><li><span class="d">Plate I</span><a href="../index.html#spike-abstraction">This edge on the Atlas</a></li><li><span class="d">From</span><a href="08-phase-plane-analysis-of-excitability.html">Phase-Plane Analysis of Excitability</a></li><li><span class="d">To</span><a href="10-leaky-integrate-and-fire-neuron.html">Leaky Integrate-and-Fire Neuron</a></li></ul></div></footer>
+<nav class="seq"><a href="08-phase-plane-analysis-of-excitability.html">← Plate VIII · Phase-Plane Analysis of Excitability</a><a href="10-leaky-integrate-and-fire-neuron.html">Plate X · Leaky Integrate-and-Fire Neuron →</a></nav>
+</div>
+<script>/* Shared runtime for Atlas plates: colours, canvases, plots, controls, animation. */
+const P = (() => {
+  const root = document.documentElement;
+  const col = {};
+  function readCols() {
+    const cs = getComputedStyle(root);
+    col.paper = cs.getPropertyValue('--paper').trim();
+    col.ink = cs.getPropertyValue('--ink').trim();
+    col.soft = cs.getPropertyValue('--ink-soft').trim();
+    col.accent = cs.getPropertyValue('--accent').trim();
+    col.ochre = cs.getPropertyValue('--ochre').trim();
+    col.rule = cs.getPropertyValue('--rule').trim();
+  }
+  readCols();
+
+  /* canvases */
+  const cvs = {}, draws = [];
+  let pending = false;
+  function redrawAll() { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; readCols(); draws.forEach(f => { try { f(); } catch (e) { console.error(e); } }); }); }
+  function setup(el) {
+    const wrap = el.parentElement;
+    const asp = +wrap.dataset.aspect || 0.6, maxh = +wrap.dataset.maxh || 520;
+    const o = { el, ctx: el.getContext('2d'), w: 0, h: 0 };
+    o.fit = () => {
+      const w = Math.max(10, wrap.clientWidth), h = Math.min(maxh, Math.round(w * asp));
+      wrap.style.height = h + 'px';
+      const dpr = window.devicePixelRatio || 1;
+      el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+      o.w = w; o.h = h; o.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    o.fit();
+    let lw = wrap.clientWidth;
+    new ResizeObserver(() => { if (wrap.clientWidth !== lw) { lw = wrap.clientWidth; o.fit(); redrawAll(); } }).observe(wrap);
+    return o;
+  }
+  document.querySelectorAll('.panel canvas').forEach(el => cvs[el.id] = setup(el));
+  const cv = id => cvs[id];
+  const clear = c => { c.ctx.clearRect(0, 0, c.w, c.h); };
+  const onDraw = f => { draws.push(f); };
+
+  /* numbers */
+  function niceTicks(a, b, n = 5) {
+    const span = b - a; if (!(span > 0)) return [a];
+    const s0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(s0))), e = s0 / mag;
+    const st = (e >= 7.5 ? 10 : e >= 3.5 ? 5 : e >= 1.5 ? 2 : 1) * mag;
+    const t = []; for (let v = Math.ceil(a / st - 1e-9) * st; v <= b + st * 1e-9; v += st) t.push(+v.toFixed(10));
+    return t;
+  }
+  const fmt = v => { const a = Math.abs(v); if (a === 0) return '0'; if (a >= 1e4 || a < 1e-3) return v.toExponential(0).replace('e+', 'e'); return String(+v.toPrecision(4)); };
+
+  /* plot */
+  class Plot {
+    constructor(c, o) {
+      this.c = c; this.g = c.ctx;
+      const b = o.box || [0, 0, c.w, c.h];
+      const pad = Object.assign({ l: 48, r: 12, t: 10, b: 34 }, o.pad || {});
+      this.L = b[0] + pad.l; this.R = b[0] + b[2] - pad.r; this.T = b[1] + pad.t; this.B = b[1] + b[3] - pad.b;
+      this.x0 = o.x[0]; this.x1 = o.x[1]; this.y0 = o.y[0]; this.y1 = o.y[1];
+      this.xlog = !!o.xlog; this.ylog = !!o.ylog;
+    }
+    tx(v, a, b, log) { return log ? (Math.log10(v) - Math.log10(a)) / (Math.log10(b) - Math.log10(a)) : (v - a) / (b - a); }
+    X(v) { return this.L + this.tx(v, this.x0, this.x1, this.xlog) * (this.R - this.L); }
+    Y(v) { return this.B - this.tx(v, this.y0, this.y1, this.ylog) * (this.B - this.T); }
+    ix(px) { const t = (px - this.L) / (this.R - this.L); return this.xlog ? Math.pow(10, Math.log10(this.x0) + t * (Math.log10(this.x1) - Math.log10(this.x0))) : this.x0 + t * (this.x1 - this.x0); }
+    iy(py) { const t = (this.B - py) / (this.B - this.T); return this.ylog ? Math.pow(10, Math.log10(this.y0) + t * (Math.log10(this.y1) - Math.log10(this.y0))) : this.y0 + t * (this.y1 - this.y0); }
+    ticks(a, b, log, n) {
+      if (!log) return niceTicks(a, b, n);
+      const t = []; for (let k = Math.ceil(Math.log10(a) - 1e-9); k <= Math.floor(Math.log10(b) + 1e-9); k++) t.push(Math.pow(10, k));
+      return t;
+    }
+    axes(o = {}) {
+      const g = this.g;
+      g.save(); g.strokeStyle = col.ink; g.fillStyle = col.soft; g.lineWidth = 1;
+      g.font = '10.5px "Courier Prime", "Courier New", monospace';
+      if (o.grid !== false) {
+        g.strokeStyle = col.rule; g.lineWidth = .7;
+        (o.yt || this.ticks(this.y0, this.y1, this.ylog, o.ny || 4)).forEach(v => { const y = Math.round(this.Y(v)) + .5; g.beginPath(); g.moveTo(this.L, y); g.lineTo(this.R, y); g.stroke(); });
+        g.strokeStyle = col.ink; g.lineWidth = 1;
+      }
+      g.beginPath(); g.moveTo(this.L + .5, this.T); g.lineTo(this.L + .5, this.B + .5); g.lineTo(this.R, this.B + .5); g.stroke();
+      if (!o.noxt) {
+        g.textAlign = 'center'; g.textBaseline = 'top';
+        (o.xt || this.ticks(this.x0, this.x1, this.xlog, o.nx || 5)).forEach(v => { const x = this.X(v); if (x < this.L - 1 || x > this.R + 1) return; g.beginPath(); g.moveTo(x, this.B); g.lineTo(x, this.B + 4); g.stroke(); g.fillText((o.xf || fmt)(v), x, this.B + 6); });
+      }
+      if (!o.noyt) {
+        g.textAlign = 'right'; g.textBaseline = 'middle';
+        (o.yt || this.ticks(this.y0, this.y1, this.ylog, o.ny || 4)).forEach(v => { const y = this.Y(v); if (y < this.T - 1 || y > this.B + 1) return; g.beginPath(); g.moveTo(this.L - 4, y); g.lineTo(this.L, y); g.stroke(); g.fillText((o.yf || fmt)(v), this.L - 6, y); });
+      }
+      g.font = 'italic 13px Spectral, Georgia, serif'; g.fillStyle = col.ink;
+      if (o.xl) { g.textAlign = 'right'; g.textBaseline = 'bottom'; g.fillText(o.xl, this.R, this.B - 4); }
+      if (o.yl) { g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText(o.yl, this.L + 6, this.T); }
+      g.restore();
+    }
+    clip(f) { const g = this.g; g.save(); g.beginPath(); g.rect(this.L, this.T - 2, this.R - this.L, this.B - this.T + 4); g.clip(); f(); g.restore(); }
+    style(s) { const g = this.g; g.strokeStyle = s.color || col.ink; g.lineWidth = s.w || 1.4; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.setLineDash(s.dash || []); g.lineJoin = 'round'; g.lineCap = 'round'; }
+    line(xs, ys, s = {}) {
+      const g = this.g; this.clip(() => {
+        this.style(s); g.beginPath(); let on = false;
+        for (let i = 0; i < xs.length; i++) { const y = ys[i]; if (y == null || !isFinite(y)) { on = false; continue; } const px = this.X(xs[i]), py = this.Y(y); if (!on) { g.moveTo(px, py); on = true; } else g.lineTo(px, py); }
+        g.stroke();
+      });
+    }
+    fn(f, s = {}, n = 200) { const xs = [], ys = []; for (let i = 0; i <= n; i++) { const x = this.xlog ? Math.pow(10, Math.log10(this.x0) + i / n * (Math.log10(this.x1) - Math.log10(this.x0))) : this.x0 + i / n * (this.x1 - this.x0); xs.push(x); ys.push(f(x)); } this.line(xs, ys, s); }
+    steps(xs, ys, s = {}) { const X = [], Y = []; for (let i = 0; i < xs.length; i++) { if (i) { X.push(xs[i]); Y.push(ys[i - 1]); } X.push(xs[i]); Y.push(ys[i]); } this.line(X, Y, s); }
+    dots(xs, ys, s = {}) {
+      const g = this.g; this.clip(() => {
+        g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.fillStyle = s.color || col.ink; g.strokeStyle = s.color || col.ink; g.lineWidth = 1;
+        for (let i = 0; i < xs.length; i++) { if (!isFinite(ys[i])) continue; g.beginPath(); g.arc(this.X(xs[i]), this.Y(ys[i]), s.r || 2.5, 0, 7); s.hollow ? (g.fillStyle = col.paper, g.fill(), g.stroke()) : g.fill(); }
+        g.globalAlpha = 1;
+      });
+    }
+    vline(x, s = {}) { const g = this.g; this.style(s); g.beginPath(); g.moveTo(this.X(x), s.y0 != null ? this.Y(s.y0) : this.T); g.lineTo(this.X(x), s.y1 != null ? this.Y(s.y1) : this.B); g.stroke(); g.globalAlpha = 1; g.setLineDash([]); }
+    hline(y, s = {}) { const g = this.g; this.style(s); g.beginPath(); g.moveTo(this.L, this.Y(y)); g.lineTo(this.R, this.Y(y)); g.stroke(); g.globalAlpha = 1; g.setLineDash([]); }
+    band(a, b, s = {}) { const g = this.g; g.save(); g.globalAlpha = s.alpha || .15; g.fillStyle = s.color || col.ochre; g.fillRect(this.X(a), this.T, this.X(b) - this.X(a), this.B - this.T); g.restore(); }
+    text(t, x, y, s = {}) { label(this.g, t, this.X(x), this.Y(y), s); }
+  }
+  function label(g, t, x, y, s = {}) {
+    g.save(); g.fillStyle = s.color || col.ink; g.globalAlpha = s.alpha == null ? 1 : s.alpha;
+    g.font = s.font || (s.mono ? '10.5px "Courier Prime", "Courier New", monospace' : (s.italic === false ? '' : 'italic ') + (s.size || 13) + 'px Spectral, Georgia, serif');
+    g.textAlign = s.align || 'left'; g.textBaseline = s.base || 'middle'; g.fillText(t, x, y); g.restore();
+  }
+  const plot = (c, o) => new Plot(c, o);
+
+  /* drawing helpers in pixel space */
+  function circle(g, x, y, r, s = {}) { g.save(); g.beginPath(); g.arc(x, y, r, 0, 7); if (s.fill) { g.fillStyle = s.fill; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.fill(); g.globalAlpha = 1; } if (s.stroke !== false) { g.strokeStyle = s.stroke || col.ink; g.lineWidth = s.w || 1.2; g.setLineDash(s.dash || []); g.stroke(); } g.restore(); }
+  function seg(g, x1, y1, x2, y2, s = {}) { g.save(); g.strokeStyle = s.color || col.ink; g.lineWidth = s.w || 1.2; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.setLineDash(s.dash || []); g.lineCap = 'round'; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.restore(); }
+  function arrow(g, x1, y1, x2, y2, s = {}) { seg(g, x1, y1, x2, y2, s); const a = Math.atan2(y2 - y1, x2 - x1), h = s.head || 7; g.save(); g.strokeStyle = s.color || col.ink; g.lineWidth = s.w || 1.2; g.globalAlpha = s.alpha == null ? 1 : s.alpha; g.beginPath(); g.moveTo(x2 - h * Math.cos(a - .42), y2 - h * Math.sin(a - .42)); g.lineTo(x2, y2); g.lineTo(x2 - h * Math.cos(a + .42), y2 - h * Math.sin(a + .42)); g.stroke(); g.restore(); }
+  function mix(a, b, t) { /* mix two css colours by drawing; returns rgba string of a with alpha t */ return { a, b, t }; }
+  function shade(c, t) { /* colour c (hex or rgb) at alpha t */ const h = c.replace('#', ''); if (h.length >= 6) { const r = parseInt(h.slice(0, 2), 16), gg = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); return `rgba(${r},${gg},${b},${Math.max(0, Math.min(1, t)).toFixed(3)})`; } return c; }
+
+  /* controls */
+  const box = document.getElementById('controls');
+  function ctl(label) { const d = document.createElement('div'); d.className = 'ctl'; const l = document.createElement('div'); l.className = 'lab'; const a = document.createElement('span'); a.textContent = label; const v = document.createElement('span'); v.className = 'val'; l.append(a, v); d.append(l); box.append(d); return { d, v }; }
+  let nid = 0;
+  function slider(o) {
+    const { d, v } = ctl(o.label); const inp = document.createElement('input'); inp.type = 'range'; inp.id = 'c' + (++nid);
+    inp.setAttribute('aria-label', o.label);
+    const lg = !!o.log; inp.min = lg ? Math.log10(o.min) : o.min; inp.max = lg ? Math.log10(o.max) : o.max; inp.step = o.step || (lg ? .01 : (o.max - o.min) / 200); inp.value = lg ? Math.log10(o.value) : o.value;
+    d.append(inp);
+    let val = o.value; const show = () => { v.textContent = (o.fmt || fmt)(val); }; show();
+    inp.addEventListener('input', () => { val = lg ? Math.pow(10, +inp.value) : +inp.value; if (o.round) val = Math.round(val); show(); o.on && o.on(val); });
+    return { get: () => val, set: x => { val = x; inp.value = lg ? Math.log10(x) : x; show(); } };
+  }
+  function choice(o) {
+    const { d, v } = ctl(o.label); v.remove(); const s = document.createElement('div'); s.className = 'seg'; s.setAttribute('role', 'group'); s.setAttribute('aria-label', o.label);
+    let val = o.value; const bs = o.options.map(([k, l]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = l; b.setAttribute('aria-pressed', k === val); b.addEventListener('click', () => { val = k; bs.forEach((x, i) => x.setAttribute('aria-pressed', o.options[i][0] === val)); o.on && o.on(val); }); s.append(b); return b; });
+    d.append(s); return { get: () => val };
+  }
+  function button(label, on) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = label; b.addEventListener('click', on); box.append(b); return b; }
+
+  /* animation */
+  function loop(step) { let last = null; function f(t) { if (!document.hidden && last != null) step(Math.min(0.05, (t - last) / 1000)); last = t; requestAnimationFrame(f); } requestAnimationFrame(f); }
+
+  /* randomness */
+  function rng(seed) { let s = seed >>> 0 || 1; return () => { s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function gauss(r) { let u = 0; while (u === 0) u = r(); const v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+
+  /* pointer dragging on a canvas */
+  function drag(c, h) {
+    const el = c.el; let on = false;
+    const pt = e => { const r = el.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    el.addEventListener('pointerdown', e => { on = true; try { el.setPointerCapture(e.pointerId); } catch (x) {} h.down && h.down(pt(e)); e.preventDefault(); });
+    el.addEventListener('pointermove', e => { const p = pt(e); if (on) h.move && h.move(p); else h.hover && h.hover(p); });
+    const up = e => { if (on) { on = false; h.up && h.up(pt(e)); } };
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  }
+  function readout(id, html) { const el = document.getElementById('ro-' + id); if (el) el.innerHTML = html; }
+
+  /* print toggle */
+  const bp = document.getElementById('p-plate'), bc = document.getElementById('p-cyan');
+  function setPrint(p, save) {
+    if (p === 'cyan') root.setAttribute('data-print', 'cyan'); else root.removeAttribute('data-print');
+    bp.setAttribute('aria-pressed', p !== 'cyan'); bc.setAttribute('aria-pressed', p === 'cyan');
+    if (save) try { localStorage.setItem('atlas-print', p); } catch (e) {}
+    redrawAll();
+  }
+  bp.addEventListener('click', () => setPrint('plate', true));
+  bc.addEventListener('click', () => setPrint('cyan', true));
+  try { setPrint(localStorage.getItem('atlas-print') === 'cyan' ? 'cyan' : 'plate'); } catch (e) { setPrint('plate'); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(redrawAll);
+
+  return { col, cv, clear, onDraw, redraw: redrawAll, plot, label, circle, seg, arrow, shade, slider, choice, button, loop, rng, gauss, drag, readout, niceTicks, fmt };
+})();
+</script>
+<script>(function () {
+const gNa = 120, gK = 36, gL = 0.3, ENa = 50, EK = -77, EL = -54.4;
+const vt = (x, y) => Math.abs(x) < 1e-6 ? y : x / (1 - Math.exp(-x / y));
+const am = V => 0.1 * vt(V + 40, 10), bm = V => 4 * Math.exp(-(V + 65) / 18);
+const an = V => 0.01 * vt(V + 55, 10), bn = V => 0.125 * Math.exp(-(V + 65) / 80);
+const minf = V => am(V) / (am(V) + bm(V));
+const tau = 8, EL2 = -65, th = -55, R = 1.5, T = 100, dt = 0.02, on = 10;
+let I = 12, Vr = -65, two = null, lif = null, fiTwo = null, rest = null;
+function restState() { let V = -65, n = .3; for (let i = 0; i < 40000; i++) { n += dt * (an(V) * (1 - n) - bn(V) * n); V += dt * (-gNa * minf(V) ** 3 * Math.max(0, .8 - n) * (V - ENa) - gK * n ** 4 * (V - EK) - gL * (V - EL)); } return [V, n]; }
+function runTwo(Iv, Tm, rec) {
+  let [V, n] = rest; const o = { t: [], V: [] }; let spikes = 0, prev = V;
+  for (let i = 0, t = 0; t <= Tm; i++, t = i * dt) {
+    const Ii = t >= on ? Iv : 0;
+    n += dt * (an(V) * (1 - n) - bn(V) * n);
+    V += dt * (Ii - gNa * minf(V) ** 3 * Math.max(0, .8 - n) * (V - ENa) - gK * n ** 4 * (V - EK) - gL * (V - EL));
+    if (prev < 0 && V >= 0 && t > on + 20) spikes++; prev = V;
+    if (rec && i % 5 === 0) { o.t.push(t); o.V.push(V); }
+  }
+  o.rate = spikes / ((Tm - on - 20) / 1000); return o;
+}
+const TREF = 5;
+function runLif() { let V = EL2, hold = 0; const o = { t: [], V: [], sp: [] }; for (let i = 0, t = 0; t <= T; i++, t = i * dt) { const Ii = t >= on ? I : 0; if (hold > 0) hold -= dt; else V += dt / tau * (-(V - EL2) + R * Ii); if (V >= th) { o.sp.push(t); V = Vr; hold = TREF; } if (i % 5 === 0) { o.t.push(t); o.V.push(V); } } return o; }
+const lifRate = Iv => { const x = R * Iv + EL2; if (x <= th) return 0; return 1000 / (TREF + tau * Math.log((x - Vr) / (x - th))); };
+function fiCurve() { fiTwo = []; for (let Iv = 0; Iv <= 30; Iv += 1) fiTwo.push([Iv, runTwo(Iv, 420, false).rate]); }
+function run() { two = runTwo(I, T, true); lif = runLif(); }
+function draw() {
+  const col = P.col; let c = P.cv('ov'); P.clear(c);
+  let p = P.plot(c, { x: [0, T], y: [-85, 50] });
+  p.axes({ xl: 'time (ms)', yl: 'V (mV)' });
+  p.hline(th, { color: col.ochre, dash: [4, 3], w: 1 }); p.text('θ', 1, th + 5, { color: col.ochre });
+  p.line(two.t, two.V, { color: col.ink, w: 1.6 });
+  p.line(lif.t, lif.V, { color: col.accent, w: 1.6 });
+  lif.sp.forEach(s => p.vline(s, { y0: th, y1: 40, color: col.accent, w: 1 }));
+  P.readout('ov', `<span style="color:var(--ink)">two-variable model</span> against <span style="color:var(--accent)">integrate-and-fire</span> (ticks mark its spikes) · I = ${I} μA/cm²`);
+  c = P.cv('fi'); P.clear(c);
+  const ymax = Math.max(150, ...fiTwo.map(q => q[1]), lifRate(30)) * 1.08;
+  p = P.plot(c, { x: [0, 30], y: [0, ymax] });
+  p.axes({ xl: 'current (μA/cm²)', yl: 'firing rate (Hz)' });
+  p.line(fiTwo.map(q => q[0]), fiTwo.map(q => q[1]), { color: col.ink, w: 1.8 });
+  p.fn(lifRate, { color: col.accent, w: 1.8 }, 300);
+  p.vline(I, { color: col.soft, dash: [2, 3], w: .8 });
+  P.readout('fi', `reset V<sub>reset</sub> = ${Vr} mV · integrate-and-fire rate at I: ${lifRate(I).toFixed(0)} Hz`);
+}
+P.slider({ label: 'Input current', min: 0, max: 30, step: .5, value: I, fmt: v => v.toFixed(1) + ' μA/cm²', on: v => { I = v; run(); draw(); } });
+P.slider({ label: 'Reset voltage', min: -80, max: -56, step: 1, value: Vr, fmt: v => v + ' mV', on: v => { Vr = v; run(); draw(); } });
+rest = restState(); fiCurve(); run();
+P.onDraw(draw); draw();
+
+})();</script>
+</body></html>
