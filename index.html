@@ -86,6 +86,10 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline: 2px s
 #map { width: 100%; height: 100%; display: block; user-select: none; -webkit-user-select: none; }
 .plate-no { position: absolute; right: 14px; top: 12px; font-family: var(--f-mono); font-size: 11px; color: var(--ink-soft); letter-spacing: .06em; pointer-events: none; }
 .zoomctl { position: absolute; top: 10px; left: 10px; }
+.chips { position: absolute; inset: 0; pointer-events: none; }
+.chip { position: absolute; pointer-events: auto; font-family: var(--f-mono); font-size: 11px; letter-spacing: .04em; white-space: nowrap; color: var(--ink); background: var(--paper); border: 1px solid var(--ink); padding: 3px 8px; cursor: pointer; }
+.chip.mod { color: var(--ochre); border: 1px dashed var(--ochre); }
+.chip:hover, .chip:focus-visible { color: var(--accent); border-color: var(--accent); outline: none; }
 
 /* map drawing */
 .node:focus, .lens:focus, .edge path.hit:focus { outline: none; }
@@ -202,7 +206,7 @@ aside.panel > * { min-width: 0; }
 @media (max-width: 760px) {
   .preface-box { padding: 16px; }
   aside.panel { border-top: 3px double var(--ink); margin-top: 12px; padding: 14px 4px 0; }
-  .zoomctl, .howto { display: none; }
+  .zoomctl, .howto, .chips { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .el, .op, aside.panel { transition: none !important; } }
 
@@ -841,8 +845,7 @@ aside.panel > * { min-width: 0; }
   const kindLabel = { spine: 'Main spine', branch: 'Side branch', mod: 'Modulator', lens: 'Transversal lens' };
   function openPanel() {
     panel.classList.remove('closed');
-    // selecting never changes the zoom: stay in the overview (fitted beside the panel), or follow the selection in detail
-    if (mode === 'H') level === 'detail' ? setLevel('detail', focusPoint()) : setLevel('overview');
+    if (mode === 'H') setLevel('detail', focusPoint());
     else panel.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   }
   function closePanel() { panel.classList.add('closed'); }
@@ -927,13 +930,13 @@ aside.panel > * { min-width: 0; }
   function wirePanel() {
     panel.querySelectorAll('.move').forEach(btn => btn.addEventListener('click', () => btn.dataset.edge ? selectEdge(btn.dataset.edge) : selectNode(btn.dataset.node)));
     const c = panel.querySelector('[data-clear]');
-    if (c) c.addEventListener('click', () => { if (sel) clearSel(); else if (mode === 'H') { closePanel(); setLevel('overview'); } else mapbox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); });
+    if (c) c.addEventListener('click', () => { if (sel) clearSel(); else if (mode === 'H') closePanel(); else mapbox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); });
   }
 
   /* ---------- two magnifications ---------- */
   const zOver = document.getElementById('z-over'), zDetail = document.getElementById('z-detail');
   let anim = null;
-  function apply() { svg.setAttribute('viewBox', `${vb.x.toFixed(2)} ${vb.y.toFixed(2)} ${vb.w.toFixed(2)} ${vb.h.toFixed(2)}`); }
+  function apply() { svg.setAttribute('viewBox', `${vb.x.toFixed(2)} ${vb.y.toFixed(2)} ${vb.w.toFixed(2)} ${vb.h.toFixed(2)}`); updateChips(); }
   function animateTo(t) {
     if (anim) cancelAnimationFrame(anim);
     if (reduce) { vb = { ...t }; apply(); return; }
@@ -948,7 +951,7 @@ aside.panel > * { min-width: 0; }
     zOver.setAttribute('aria-pressed', l === 'overview'); zDetail.setAttribute('aria-pressed', l === 'detail');
     svg.classList.toggle('zoomed', l === 'detail');
     mapbox.classList.toggle('pannable', l === 'detail');
-    if (l === 'overview') { animateTo(overviewBox()); return; }
+    if (l === 'overview') { animateTo(base); return; }
     const w = base.w / 2, h = base.h / 2;
     const visFrac = visibleFrac();
     const f = focus || [vb.x + vb.w / 2, vb.y + vb.h / 2];
@@ -962,10 +965,33 @@ aside.panel > * { min-width: 0; }
     const mw = mapbox.clientWidth || 1, dw = panel.classList.contains('closed') ? 0 : panel.offsetWidth;
     return Math.max(.4, (mw - dw) / mw);
   }
-  // the whole map, shrunk to fit beside the panel when it is open
-  function overviewBox() {
-    const w = base.w / visibleFrac(), h = w * base.h / base.w;
-    return { x: 0, y: -(h - base.h) / 2, w, h };
+  // chips at the edge of the visible map for selected neighbours that are out of view or under the panel
+  const chipBox = document.createElement('div'); chipBox.className = 'chips'; mapbox.appendChild(chipBox);
+  function updateChips() {
+    chipBox.textContent = '';
+    if (!sel || mode !== 'H') return;
+    const ids = new Set(sel.type === 'node' ? incident(sel.id).flatMap(e => [e.from, e.to]) : [eById[sel.id].from, eById[sel.id].to]);
+    ids.delete(sel.id);
+    const W = mapbox.clientWidth, H = mapbox.clientHeight, s = W / vb.w, m = 10, near = 18;
+    const visW = panel.classList.contains('closed') ? W : W - panel.offsetWidth - 10;
+    const placed = [];
+    ids.forEach(id => {
+      const n = byId[id], [vx, vy] = pos(n), px = (vx - vb.x) * s, py = (vy - vb.y) * s;
+      const L = px < near, R = px > visW - near, T = py < near, B = py > H - near;
+      if (!(L || R || T || B)) return;
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip' + (n.kind === 'mod' ? ' mod' : '');
+      b.textContent = (T ? (L ? '↖' : R ? '↗' : '↑') : B ? (L ? '↙' : R ? '↘' : '↓') : L ? '←' : '→') + ' ' + nm(n);
+      b.setAttribute('aria-label', 'Go to ' + nm(n));
+      b.addEventListener('click', ev => { ev.stopPropagation(); selectNode(id); });
+      chipBox.appendChild(b);
+      const cw = b.offsetWidth, ch = b.offsetHeight, step = B ? -(ch + 4) : ch + 4;
+      let x = Math.max(m, Math.min(visW - m - cw, px - cw / 2)), y = Math.max(m, Math.min(H - m - ch, py - ch / 2));
+      // stack chips that land on one another, away from the bottom edge or else downwards
+      for (let k = 0; k < 8 && placed.some(p => x < p.x + p.w + 4 && p.x < x + cw + 4 && y < p.y + p.h && p.y < y + ch); k++) y += step;
+      placed.push({ x, y, w: cw, h: ch });
+      b.style.left = x + 'px'; b.style.top = y + 'px';
+    });
   }
   zOver.addEventListener('click', () => setLevel('overview'));
   zDetail.addEventListener('click', () => setLevel('detail', focusPoint()));
@@ -1037,12 +1063,7 @@ aside.panel > * { min-width: 0; }
     if (mode === 'V' && !sel) renderDefault();
     if (mode === 'H' && !sel) closePanel();
   });
-  // keep the overview fitted beside the panel as the window changes size
-  window.addEventListener('resize', () => requestAnimationFrame(() => {
-    if (mode !== 'H' || level !== 'overview') return;
-    if (anim) cancelAnimationFrame(anim);
-    vb = overviewBox(); apply();
-  }));
+  window.addEventListener('resize', () => requestAnimationFrame(updateChips));
   draw();
   if (mode === 'V') { renderDefault(); panel.classList.remove('closed'); }
   const h = decodeURIComponent((location.hash || '').slice(1));
