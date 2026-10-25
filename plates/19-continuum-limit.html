@@ -139,6 +139,10 @@ footer li .d { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06e
   .panels { grid-template-columns: minmax(0, 1fr) !important; }
   .fields div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
 }
+
+.colophon { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 18px; font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .04em; color: var(--ink-soft); }
+.colophon a { color: inherit; }
+.colophon { margin: 0; border-top: 1px solid var(--rule); padding-top: 10px; }
 </style></head><body>
 <div class="wrap">
 <div class="top"><a href="../index.html#continuum-limit">← The Abstraction Atlas</a><span>Plate XIX</span><div class="seg" role="group" aria-label="Print"><button type="button" id="p-plate" aria-pressed="true">Plate</button><button type="button" id="p-cyan" aria-pressed="false">Cyanotype</button></div></div>
@@ -158,6 +162,7 @@ do the same on a fine grid for the continuous field
 draw the discrete values as stems over the continuous profile</pre></div></details>
 <footer class="foot"><div><h3>Originators</h3><ul><li><span class="g g-est" title="established">●</span>Wilson and Cowan (1973)</li><li><span class="g g-est" title="established">●</span>Amari (1977)</li></ul></div><div><h3>On the Atlas</h3><ul><li><span class="d">Plate I</span><a href="../index.html#continuum-limit">This edge on the Atlas</a></li><li><span class="d">From</span><a href="18-neural-mass-model-of-a-cortical-column.html">Neural Mass Model of a Cortical Column</a></li><li><span class="d">To</span><a href="20-neural-field-equations.html">Neural Field Equations</a></li></ul></div></footer>
 <nav class="seq"><a href="18-neural-mass-model-of-a-cortical-column.html">← Plate XVIII · Neural Mass Model of a Cortical Column</a><a href="20-neural-field-equations.html">Plate XX · Neural Field Equations →</a></nav>
+<p class="colophon"><span>Conceived, curated, maintained and reviewed by <a href="https://neuro.nl/research/negrello" target="_blank" rel="noopener">Mario Negrello</a></span><a class="version" data-file="plates/19-continuum-limit.html" href="https://github.com/MRIO/AbstractionAtlas/commits/main/plates/19-continuum-limit.html" target="_blank" rel="noopener">Version history</a></p>
 </div>
 <script>/* Shared runtime for Atlas plates: colours, canvases, plots, controls, animation. */
 const P = (() => {
@@ -377,5 +382,22 @@ P.slider({ label: 'Number of populations', min: 4, max: 256, log: true, value: M
 P.slider({ label: 'Kernel width σ', min: .05, max: 1, log: true, value: sig, fmt: v => v.toFixed(2), on: v => { sig = v; run(); draw(); } });
 P.onDraw(draw); run(); draw();
 
+})();</script>
+<script>/* Version stamp: the latest commit that touched this file, from the GitHub API. */
+(function () {
+  const a = document.querySelector('.colophon .version'); if (!a) return;
+  const file = a.dataset.file, key = 'atlas-version:' + file;
+  const show = v => { a.textContent = 'Revision ' + v.n + ' · ' + v.date + ' · ' + v.sha; a.title = v.msg; };
+  try { const v = JSON.parse(sessionStorage.getItem(key)); if (v) return show(v); } catch (e) {}
+  fetch('https://api.github.com/repos/MRIO/AbstractionAtlas/commits?per_page=1&path=' + encodeURIComponent(file))
+    .then(r => r.ok ? r.json().then(j => [j, r.headers.get('Link') || '']) : Promise.reject(r.status))
+    .then(([j, link]) => {
+      if (!j.length) return;
+      const last = /[?&]page=(\d+)>; rel="last"/.exec(link), c = j[0];
+      const v = { n: last ? +last[1] : 1, sha: c.sha.slice(0, 7), msg: c.commit.message.split('\n')[0],
+        date: new Date(c.commit.committer.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) };
+      show(v); try { sessionStorage.setItem(key, JSON.stringify(v)); } catch (e) {}
+    })
+    .catch(() => {});
 })();</script>
 </body></html>

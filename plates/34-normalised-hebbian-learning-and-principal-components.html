@@ -139,6 +139,10 @@ footer li .d { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06e
   .panels { grid-template-columns: minmax(0, 1fr) !important; }
   .fields div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
 }
+
+.colophon { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 18px; font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .04em; color: var(--ink-soft); }
+.colophon a { color: inherit; }
+.colophon { margin: 0; border-top: 1px solid var(--rule); padding-top: 10px; }
 </style></head><body>
 <div class="wrap">
 <div class="top"><a href="../index.html#long-term-plasticity">← The Abstraction Atlas</a><span>Plate XXXIV</span><div class="seg" role="group" aria-label="Print"><button type="button" id="p-plate" aria-pressed="true">Plate</button><button type="button" id="p-cyan" aria-pressed="false">Cyanotype</button></div></div>
@@ -158,6 +162,7 @@ footer li .d { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06e
         normalised:  w_ij ← w_ij + η·a_j·(a_i − a_j·w_ij)</pre></div></details>
 <footer class="foot"><div><h3>Originators</h3><ul><li><span class="g g-est" title="established">●</span>Hebb (1949)</li><li><span class="g g-est" title="established">●</span>Oja (1982), Journal of Mathematical Biology 15, 267–273</li></ul></div><div><h3>On the Atlas</h3><ul><li><span class="d">Plate I</span><a href="../index.html#long-term-plasticity">This node on the Atlas</a></li><li><span class="d">Acts on</span><a href="12-balanced-excitatory-inhibitory-network.html">Balanced Excitatory–Inhibitory Network</a></li><li><span class="d">Acts on</span><a href="14-excitatory-inhibitory-rate-model.html">Excitatory–Inhibitory Rate Model</a></li><li><span class="d">Acts on</span><a href="24-artificial-neural-networks.html">Artificial Neural Networks</a></li><li><span class="d">Acts on</span><a href="26-attractor-networks-and-associative-memory.html">Attractor Networks and Associative Memory</a></li><li><span class="d">Companion</span><a href="33-spike-timing-dependent-plasticity.html">Spike-Timing-Dependent Plasticity</a></li></ul></div><div><h3>Other explainers</h3><ul><li><span class="d">Go deeper</span><a href="https://mrio.github.io/NeuroAI_explainers/Stabilizing%20Hebbian%20Learning/oja_rule.html" target="_blank" rel="noopener">Stabilizing Hebbian Learning: Oja&#x27;s Rule</a></li></ul></div></footer>
 <nav class="seq"><a href="33-spike-timing-dependent-plasticity.html">← Plate XXXIII · Spike-Timing-Dependent Plasticity</a><a href="35-synaptic-depression-and-facilitation.html">Plate XXXV · Synaptic Depression and Facilitation →</a></nav>
+<p class="colophon"><span>Conceived, curated, maintained and reviewed by <a href="https://neuro.nl/research/negrello" target="_blank" rel="noopener">Mario Negrello</a></span><a class="version" data-file="plates/34-normalised-hebbian-learning-and-principal-components.html" href="https://github.com/MRIO/AbstractionAtlas/commits/main/plates/34-normalised-hebbian-learning-and-principal-components.html" target="_blank" rel="noopener">Version history</a></p>
 </div>
 <script>/* Shared runtime for Atlas plates: colours, canvases, plots, controls, animation. */
 const P = (() => {
@@ -373,5 +378,22 @@ P.slider({ label: 'Cloud shape σ₂/σ₁', min: .1, max: 1, step: .01, value: 
 P.button('Restart', reset);
 P.loop(sec => { stepN(Math.max(1, Math.round(sec * 40))); draw(); });
 
+})();</script>
+<script>/* Version stamp: the latest commit that touched this file, from the GitHub API. */
+(function () {
+  const a = document.querySelector('.colophon .version'); if (!a) return;
+  const file = a.dataset.file, key = 'atlas-version:' + file;
+  const show = v => { a.textContent = 'Revision ' + v.n + ' · ' + v.date + ' · ' + v.sha; a.title = v.msg; };
+  try { const v = JSON.parse(sessionStorage.getItem(key)); if (v) return show(v); } catch (e) {}
+  fetch('https://api.github.com/repos/MRIO/AbstractionAtlas/commits?per_page=1&path=' + encodeURIComponent(file))
+    .then(r => r.ok ? r.json().then(j => [j, r.headers.get('Link') || '']) : Promise.reject(r.status))
+    .then(([j, link]) => {
+      if (!j.length) return;
+      const last = /[?&]page=(\d+)>; rel="last"/.exec(link), c = j[0];
+      const v = { n: last ? +last[1] : 1, sha: c.sha.slice(0, 7), msg: c.commit.message.split('\n')[0],
+        date: new Date(c.commit.committer.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) };
+      show(v); try { sessionStorage.setItem(key, JSON.stringify(v)); } catch (e) {}
+    })
+    .catch(() => {});
 })();</script>
 </body></html>

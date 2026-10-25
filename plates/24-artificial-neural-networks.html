@@ -139,6 +139,10 @@ footer li .d { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06e
   .panels { grid-template-columns: minmax(0, 1fr) !important; }
   .fields div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
 }
+
+.colophon { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 18px; font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .04em; color: var(--ink-soft); }
+.colophon a { color: inherit; }
+.colophon { margin: 0; border-top: 1px solid var(--rule); padding-top: 10px; }
 </style></head><body>
 <div class="wrap">
 <div class="top"><a href="../index.html#artificial-network">← The Abstraction Atlas</a><span>Plate XXIV</span><div class="seg" role="group" aria-label="Print"><button type="button" id="p-plate" aria-pressed="true">Plate</button><button type="button" id="p-cyan" aria-pressed="false">Cyanotype</button></div></div>
@@ -159,6 +163,7 @@ footer li .d { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06e
     move every weight a small step against its gradient</pre></div></details>
 <footer class="foot"><div><h3>Originators</h3><ul><li><span class="g g-est" title="established">●</span>McCulloch and Pitts (1943), threshold units</li><li><span class="g g-est" title="established">●</span>Rosenblatt (1958), the perceptron</li><li><span class="g g-est" title="established">●</span>Rumelhart, Hinton and Williams (1986), backpropagation</li></ul></div><div><h3>On the Atlas</h3><ul><li><span class="d">Plate I</span><a href="../index.html#artificial-network">This node on the Atlas</a></li><li><span class="d">Back to</span><a href="23-weighted-sum-and-nonlinearity.html">Weighted Sum and Nonlinearity</a></li><li><span class="d">Modulated by</span><a href="33-spike-timing-dependent-plasticity.html">Spike-Timing-Dependent Plasticity</a></li><li><span class="d">Modulated by</span><a href="34-normalised-hebbian-learning-and-principal-components.html">Normalised Hebbian Learning and Principal Components</a></li></ul></div><div><h3>Other explainers</h3><ul><li><span class="d">Go deeper</span><a href="https://mrio.github.io/NeuroAI_explainers/FFNN%20explainer/FFNN_explainer.html" target="_blank" rel="noopener">Feedforward Neural Networks</a></li><li><span class="d">Related</span><a href="https://mrio.github.io/NeuroAI_explainers/Receptive%20Field%20explainer/receptive_field_explainer.html" target="_blank" rel="noopener">DIY Receptive Field</a></li><li><span class="d">Related</span><a href="https://mrio.github.io/NeuroAI_explainers/LGN_on_off_cells/lgn_on_off_center_surround.html" target="_blank" rel="noopener">LGN ON/OFF Center-Surround Cells</a></li><li><span class="d">Related</span><a href="https://mrio.github.io/NeuroAI_explainers/motion_detector/reichardt-hassenstein-explainer.html" target="_blank" rel="noopener">Reichardt–Hassenstein Motion Detector</a></li><li><span class="d">Related</span><a href="https://mrio.github.io/NeuroAI_explainers/Echo%20State%20Decoder/index.html" target="_blank" rel="noopener">Echo State Decoder: Figure-Eight Arm</a></li><li><span class="d">Related</span><a href="https://mrio.github.io/NeuroAI_explainers/Autoencoder/autoencoder_explainer.html" target="_blank" rel="noopener">Through the Keyhole: Autoencoders</a></li></ul></div></footer>
 <nav class="seq"><a href="23-weighted-sum-and-nonlinearity.html">← Plate XXIII · Weighted Sum and Nonlinearity</a><a href="25-binary-units-and-symmetric-coupling.html">Plate XXV · Binary Units and Symmetric Coupling →</a></nav>
+<p class="colophon"><span>Conceived, curated, maintained and reviewed by <a href="https://neuro.nl/research/negrello" target="_blank" rel="noopener">Mario Negrello</a></span><a class="version" data-file="plates/24-artificial-neural-networks.html" href="https://github.com/MRIO/AbstractionAtlas/commits/main/plates/24-artificial-neural-networks.html" target="_blank" rel="noopener">Version history</a></p>
 </div>
 <script>/* Shared runtime for Atlas plates: colours, canvases, plots, controls, animation. */
 const P = (() => {
@@ -392,5 +397,22 @@ P.slider({ label: 'Hidden units', min: 1, max: 8, step: 1, value: H, round: true
 P.button('Reset weights', () => { init(); draw(); });
 P.onDraw(draw); init(); draw();
 
+})();</script>
+<script>/* Version stamp: the latest commit that touched this file, from the GitHub API. */
+(function () {
+  const a = document.querySelector('.colophon .version'); if (!a) return;
+  const file = a.dataset.file, key = 'atlas-version:' + file;
+  const show = v => { a.textContent = 'Revision ' + v.n + ' · ' + v.date + ' · ' + v.sha; a.title = v.msg; };
+  try { const v = JSON.parse(sessionStorage.getItem(key)); if (v) return show(v); } catch (e) {}
+  fetch('https://api.github.com/repos/MRIO/AbstractionAtlas/commits?per_page=1&path=' + encodeURIComponent(file))
+    .then(r => r.ok ? r.json().then(j => [j, r.headers.get('Link') || '']) : Promise.reject(r.status))
+    .then(([j, link]) => {
+      if (!j.length) return;
+      const last = /[?&]page=(\d+)>; rel="last"/.exec(link), c = j[0];
+      const v = { n: last ? +last[1] : 1, sha: c.sha.slice(0, 7), msg: c.commit.message.split('\n')[0],
+        date: new Date(c.commit.committer.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) };
+      show(v); try { sessionStorage.setItem(key, JSON.stringify(v)); } catch (e) {}
+    })
+    .catch(() => {});
 })();</script>
 </body></html>

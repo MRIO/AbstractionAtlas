@@ -139,6 +139,10 @@ footer li .d { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06e
   .panels { grid-template-columns: minmax(0, 1fr) !important; }
   .fields div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
 }
+
+.colophon { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 18px; font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .04em; color: var(--ink-soft); }
+.colophon a { color: inherit; }
+.colophon { margin: 0; border-top: 1px solid var(--rule); padding-top: 10px; }
 </style></head><body>
 <div class="wrap">
 <div class="top"><a href="../index.html#neural-mass">← The Abstraction Atlas</a><span>Plate XVIII</span><div class="seg" role="group" aria-label="Print"><button type="button" id="p-plate" aria-pressed="true">Plate</button><button type="button" id="p-cyan" aria-pressed="false">Cyanotype</button></div></div>
@@ -161,6 +165,7 @@ footer li .d { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06e
 EEG proxy ← y1 − y2;  spectrum ← |FFT(last 4 s)|²</pre></div></details>
 <footer class="foot"><div><h3>Originators</h3><ul><li><span class="g g-lik" title="likely">◐</span>Lopes da Silva et al. (1974)</li><li><span class="g g-est" title="established">●</span>Jansen and Rit (1995)</li></ul></div><div><h3>On the Atlas</h3><ul><li><span class="d">Plate I</span><a href="../index.html#neural-mass">This node on the Atlas</a></li><li><span class="d">Zoom in</span><a href="17-lumped-population-approximation.html">Lumped Population Approximation</a></li><li><span class="d">Zoom out</span><a href="19-continuum-limit.html">The Continuum Limit</a></li><li><span class="d">Branch</span><a href="27-phase-reduction.html">Phase Reduction</a></li><li><span class="d">Modulated by</span><a href="35-synaptic-depression-and-facilitation.html">Synaptic Depression and Facilitation</a></li><li><span class="d">Modulated by</span><a href="36-neuromodulatory-gain-control.html">Neuromodulatory Gain Control</a></li><li><span class="d">Modulated by</span><a href="37-phase-dependent-gating.html">Phase-Dependent Gating</a></li></ul></div></footer>
 <nav class="seq"><a href="17-lumped-population-approximation.html">← Plate XVII · Lumped Population Approximation</a><a href="19-continuum-limit.html">Plate XIX · The Continuum Limit →</a></nav>
+<p class="colophon"><span>Conceived, curated, maintained and reviewed by <a href="https://neuro.nl/research/negrello" target="_blank" rel="noopener">Mario Negrello</a></span><a class="version" data-file="plates/18-neural-mass-model-of-a-cortical-column.html" href="https://github.com/MRIO/AbstractionAtlas/commits/main/plates/18-neural-mass-model-of-a-cortical-column.html" target="_blank" rel="noopener">Version history</a></p>
 </div>
 <script>/* Shared runtime for Atlas plates: colours, canvases, plots, controls, animation. */
 const P = (() => {
@@ -420,5 +425,22 @@ step(2); spectrum();
 P.onDraw(drawDia); drawDia();
 P.loop(sec => { step(sec); drawEEG(); });
 
+})();</script>
+<script>/* Version stamp: the latest commit that touched this file, from the GitHub API. */
+(function () {
+  const a = document.querySelector('.colophon .version'); if (!a) return;
+  const file = a.dataset.file, key = 'atlas-version:' + file;
+  const show = v => { a.textContent = 'Revision ' + v.n + ' · ' + v.date + ' · ' + v.sha; a.title = v.msg; };
+  try { const v = JSON.parse(sessionStorage.getItem(key)); if (v) return show(v); } catch (e) {}
+  fetch('https://api.github.com/repos/MRIO/AbstractionAtlas/commits?per_page=1&path=' + encodeURIComponent(file))
+    .then(r => r.ok ? r.json().then(j => [j, r.headers.get('Link') || '']) : Promise.reject(r.status))
+    .then(([j, link]) => {
+      if (!j.length) return;
+      const last = /[?&]page=(\d+)>; rel="last"/.exec(link), c = j[0];
+      const v = { n: last ? +last[1] : 1, sha: c.sha.slice(0, 7), msg: c.commit.message.split('\n')[0],
+        date: new Date(c.commit.committer.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) };
+      show(v); try { sessionStorage.setItem(key, JSON.stringify(v)); } catch (e) {}
+    })
+    .catch(() => {});
 })();</script>
 </body></html>
