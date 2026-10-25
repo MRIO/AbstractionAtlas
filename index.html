@@ -70,6 +70,12 @@ h1 { font-family: var(--f-display); font-weight: 500; font-size: clamp(32px, 4.6
 button:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; }
 .legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .key { position: relative; cursor: help; }
+.legend .key .lbl { border-bottom: 1px dotted var(--ink-soft); }
+.legend .key:focus { outline: none; }
+.legend .key:focus-visible .lbl { color: var(--accent); border-bottom-color: var(--accent); }
+.legend .tip { position: absolute; left: 0; top: calc(100% + 8px); z-index: 20; width: max-content; max-width: min(320px, calc(100vw - 32px)); padding: 7px 10px; background: var(--paper); color: var(--ink); border: 1px solid var(--rule); box-shadow: 0 2px 8px rgba(0,0,0,.12); font-family: var(--f-text); font-size: 13px; line-height: 1.4; letter-spacing: 0; opacity: 0; visibility: hidden; transition: opacity .15s; pointer-events: none; }
+.legend .key:hover .tip, .legend .key:focus .tip { opacity: 1; visibility: visible; }
 .howto { font: inherit; background: none; border: 0; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; padding: 0; }
 
 .mapframe { position: relative; border: 1px solid var(--ink); padding: 5px; }
@@ -226,10 +232,10 @@ aside.panel > * { min-width: 0; }
 
   <div class="controls">
     <div class="legend" aria-label="Legend">
-      <span><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--ink)" stroke-width="1.7"/></svg>simplification</span>
-      <span><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--ink)" stroke-width="4.6"/><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--paper)" stroke-width="1.8"/></svg>composition</span>
-      <span><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--ink)" stroke-width="1.1"/></svg>side branch</span>
-      <span><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--ochre)" stroke-width="1.3" stroke-dasharray="5 4"/></svg>modulator, shown on selection</span>
+      <span class="key" tabindex="0"><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--ink)" stroke-width="1.7"/></svg><span class="lbl">simplification</span><span class="tip" role="tooltip">A step along the spine that replaces a model with a cheaper one, keeping some properties and deliberately giving up others.</span></span>
+      <span class="key" tabindex="0"><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--ink)" stroke-width="4.6"/><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--paper)" stroke-width="1.8"/></svg><span class="lbl">composition</span><span class="tip" role="tooltip">A step that builds a larger system out of many copies of the level before, taking nothing away from the model itself.</span></span>
+      <span class="key" tabindex="0"><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--ink)" stroke-width="1.1"/></svg><span class="lbl">side branch</span><span class="tip" role="tooltip">A step off the spine towards a functional or structural description, such as artificial networks, attractors or connectivity graphs.</span></span>
+      <span class="key" tabindex="0"><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--ochre)" stroke-width="1.3" stroke-dasharray="5 4"/></svg><span class="lbl">modulator, shown on selection</span><span class="tip" role="tooltip">A process, such as plasticity, neuromodulation or noise, that acts on several levels at once and changes how they behave rather than replacing the model.</span></span>
       <span><span class="g g-est">●</span> established <span class="g g-lik">◐</span> likely <span class="g g-unv">○</span> unverified <span>†</span> disputed</span>
     </div>
     <button type="button" class="howto" id="howto">How to read the plate</button>
