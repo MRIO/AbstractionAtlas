@@ -4,7 +4,7 @@
 
 **Live site:** https://mrio.github.io/AbstractionAtlas/
 
-The Abstraction Atlas charts the principal simplifications by which computational neuroscience has learned to describe neural tissue, from ion channels to networks of areas, together with the passages that connect them.
+The Abstraction Atlas charts the principal simplifications by which computational neuroscience has learned to describe neural tissue, from ion channels to networks of areas.
 
 Each model on the map has a deliberate omission. Rather than oversimplifying, the omissions are simplifications that add clarity and explanatory power. Each edge records what a simplification retains, what it forfeits, and the conditions under which its conclusions remain trustworthy. Enter at whichever node you happen to arrive, then move inward towards detail or outward towards parsimony, following the dashed links wherever plasticity, modulation or noise alter the picture.
 
