@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<html lang="en" data-print="cyan"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Abstraction Atlas</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -61,6 +61,7 @@ h1 { font-family: var(--f-display); font-weight: 500; font-size: clamp(32px, 4.6
 .preface li::before { content: "§"; position: absolute; left: 0; color: var(--ink-soft); font-size: 12px; top: 2px; }
 .preface b { font-weight: 600; }
 
+.print-foot { justify-content: flex-end; border-top: 1px solid var(--rule); padding-top: 12px; }
 .controls { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; font-family: var(--f-mono); font-size: 12px; color: var(--ink-soft); }
 .seg { display: inline-flex; border: 1px solid var(--ink); background: var(--paper); }
 .seg button { font: inherit; font-family: var(--f-mono); font-size: 12px; background: transparent; color: var(--ink); border: 0; padding: 5px 12px; cursor: pointer; letter-spacing: .04em; }
@@ -205,9 +206,9 @@ aside.panel > * { min-width: 0; }
 <div class="wrap">
   <header class="plate-head">
     <div class="eyebrow">NeuroAI Explainers · Plate I · Version 4</div>
-    <h1><button type="button" class="titlebtn" id="titlebtn" aria-expanded="false" aria-controls="preface-box">The Abstraction Atlas<span class="hint">§ Preface</span></button></h1>
+    <h1><button type="button" class="titlebtn" id="titlebtn" aria-expanded="true" aria-controls="preface-box">The Abstraction Atlas<span class="hint">§ Preface</span></button></h1>
     <div class="subtitle">for computational neuroscience</div>
-    <div class="preface-box" id="preface-box" hidden>
+    <div class="preface-box" id="preface-box">
     <div class="panel-top"><div><div class="kicker">Preface</div><h2>Neural models at different levels of resolution</h2></div><button type="button" class="closer" id="preface-close" aria-label="Close preface">×</button></div>
     <ul class="preface">
       <li><b>The Abstraction Atlas</b> charts the principal simplifications by which computational neuroscience has learned to describe neural tissue, from ion channels to networks of areas, together with the passages that connect them.</li>
@@ -220,11 +221,6 @@ aside.panel > * { min-width: 0; }
   </header>
 
   <div class="controls">
-    <span>Print</span>
-    <div class="seg" role="group" aria-label="Print">
-      <button type="button" id="p-plate" aria-pressed="true">Plate</button>
-      <button type="button" id="p-cyan" aria-pressed="false">Cyanotype</button>
-    </div>
     <div class="legend" aria-label="Legend">
       <span><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--ink)" stroke-width="1.7"/></svg>simplification</span>
       <span><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--ink)" stroke-width="4.6"/><line x1="0" y1="4" x2="26" y2="4" style="stroke:var(--paper)" stroke-width="1.8"/></svg>composition</span>
@@ -248,6 +244,14 @@ aside.panel > * { min-width: 0; }
     </div>
     <aside class="panel closed" id="panel" aria-live="polite"></aside>
   </div>
+
+  <footer class="controls print-foot">
+    <span>Print</span>
+    <div class="seg" role="group" aria-label="Print">
+      <button type="button" id="p-plate" aria-pressed="false">Plate</button>
+      <button type="button" id="p-cyan" aria-pressed="true">Cyanotype</button>
+    </div>
+  </footer>
 </div>
 
 <script>
@@ -980,7 +984,7 @@ aside.panel > * { min-width: 0; }
   }
   bp.addEventListener('click', () => setPrint('plate', true));
   bc.addEventListener('click', () => setPrint('cyan', true));
-  try { setPrint(localStorage.getItem('atlas-print') === 'cyan' ? 'cyan' : 'plate'); } catch (e) { setPrint('plate'); }
+  try { setPrint(localStorage.getItem('atlas-print') === 'plate' ? 'plate' : 'cyan'); } catch (e) { setPrint('cyan'); }
 
   /* ---------- preface ---------- */
   const tb = document.getElementById('titlebtn'), pbox = document.getElementById('preface-box');

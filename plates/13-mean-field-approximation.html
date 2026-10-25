@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<html lang="en" data-print="cyan"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mean-Field Approximation: From Spiking Networks to Rate Models</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Spectral+SC:wght@500&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap">
 <style>:root {
@@ -339,7 +339,7 @@ const P = (() => {
   }
   bp.addEventListener('click', () => setPrint('plate', true));
   bc.addEventListener('click', () => setPrint('cyan', true));
-  try { setPrint(localStorage.getItem('atlas-print') === 'cyan' ? 'cyan' : 'plate'); } catch (e) { setPrint('plate'); }
+  try { setPrint(localStorage.getItem('atlas-print') === 'plate' ? 'plate' : 'cyan'); } catch (e) { setPrint('cyan'); }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(redrawAll);
 
   return { col, cv, clear, onDraw, redraw: redrawAll, plot, label, circle, seg, arrow, shade, slider, choice, button, loop, rng, gauss, drag, readout, niceTicks, fmt };
